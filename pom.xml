@@ -14,14 +14,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>backingdata</id>
-			<name>Backingdata repository</name>
-			<url>http://backingdata.org/mavenRepo/</url>
-		</repository>
-	</repositories>
-
 	<build>
 		<plugins>
 			<plugin>
