@@ -13,7 +13,7 @@ The following Twitter Crawlers are availabe:
  * storage of results in different '.txt' files (UTF-8) containing one tweet per line in [JSON format](https://dev.twitter.com/overview/api/tweets, "JSON format of tweet"). For instance for the keyword crawler, one file per keyword per 20,000 tweets retrieved is created;
  * storage of log files.
  
-When using the Bounding box Filtered Crawler, you can rely on [this web interface](http://penggalian.org/bbox/, "bounding box Web interface") to easily define the coordinates of each bounding box.
+When using the Bounding box Filtered Crawler, you can rely on [this web interface](http://penggalian.org/bbox/ "bounding box Web interface") to easily define the coordinates of each bounding box.
  
  
 
