@@ -1,7 +1,10 @@
 package org.backingdata.twitter.crawler.rest;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
@@ -11,7 +14,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+
+import org.backingdata.twitter.crawler.util.CredentialObject;
+import org.backingdata.twitter.crawler.util.PropertyManager;
+import org.backingdata.twitter.crawler.util.PropertyUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import twitter4j.Paging;
 import twitter4j.ResponseList;
@@ -39,57 +47,27 @@ import twitter4j.json.DataObjectFactory;
  */
 public class TwitterRESTAccountTimelineCrawler {
 
-	private static Logger logger = Logger.getLogger(TwitterRESTAccountTimelineCrawler.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(TwitterRESTAccountTimelineCrawler.class.getName());
 
 	// Authentication
 	private static List<String> consumerKey = new ArrayList<String>();
 	private static List<String> consumerSecret = new ArrayList<String>();
 	private static List<String> token = new ArrayList<String>();
 	private static List<String> tokenSecret = new ArrayList<String>();
-
-	// Terms
+	
+	// Full local path of a local text file containing a list of tweet terms (one per line)
+	private static String fullPathOfTweetTimelineFile = "";
+	
+	// Timelines
 	private static Map<String, Long> getTimelines = new HashMap<String,Long>();
 
-	// ******************************************************
-	// PARAMETER TO PROPERLY SET: (do not modify other parameters)
-	// 1) fileSharedName - string to add in the filename where twitter timelines are stored
+	// Output directory
+	private static String outputDirPath = "";
+
+	// Output format
+	private static String outpuTweetFormat = "";
+
 	private static String fileSharedName = "twitter_timeline";
-	
-	// 2) Twitter app developer credential of each account
-	// App developer credentials can be obtained by registering a Twitter App at: https://dev.twitter.com/
-	static {
-		// TweetRESTaccess1
-		consumerKey.add("PUT_CONSUMER_KEY_1");
-		consumerSecret.add("PUT_CONSUMER_SECRET_1");
-		token.add("PUT_ACCESS_TOKEN_1");
-		tokenSecret.add("PUT_ACCESS_KEY_1");
-
-		// TweetRESTaccess2
-		consumerKey.add("PUT_CONSUMER_KEY_2");
-		consumerSecret.add("PUT_CONSUMER_SECRET_21");
-		token.add("PUT_ACCESS_TOKEN_2");
-		tokenSecret.add("PUT_ACCESS_KEY_2");
-
-		// ...
-		
-		// TweetRESTaccessN
-		consumerKey.add("PUT_CONSUMER_KEY_N");
-		consumerSecret.add("PUT_CONSUMER_SECRET_N");
-		token.add("PUT_ACCESS_TOKEN_N");
-		tokenSecret.add("PUT_ACCESS_KEY_N");
-	}
-	// 3) Set pairs string (name), user id (Long) for each twitter account to crawl
-	static {
-		getTimelines.put("Repubblica", 18935802l);
-		getTimelines.put("Sole24Ore", 420351046l);
-		getTimelines.put("CorriereDellaSera", 395218906l);
-	}
-	// 4) Set the directory where to store files, one for each user timeline:
-	private static File storageDir = new File("/path/to/local/dir/where/to/store/data");
-
-	// 5) Execute the program (main)
-	// ******************************************************
-	// ******************************************************
 
 	// Blocking queue for tweets to process
 	private static Integer sleepTimeInMilliseconds = 5000;
@@ -127,38 +105,40 @@ public class TwitterRESTAccountTimelineCrawler {
 						Long userId = entry.getValue();
 
 						Integer storedUSerTweets = 0;
-
+						
+						File storageDir = new File(outputDirPath);
 						PrintWriter twitterTimelinePW = null;
 						String fileName = storageDir.getAbsolutePath() + "/" + fileSharedName + "_" + accountName + "_" + userId + "_upTo_" + sdf.format(new Date()) + ".txt";
 						try {
 							twitterTimelinePW = new PrintWriter(fileName, "UTF-8");
 						} catch (FileNotFoundException e) {
-							logger.info("CANNOT OPEN FILE: " + fileName + " - Exception: " + e.getMessage());
+							System.out.println("CANNOT OPEN FILE: " + fileName + " - Exception: " + e.getMessage());
 							e.printStackTrace();
 						} catch (UnsupportedEncodingException e) {
-							logger.info("CANNOT OPEN FILE: " + fileName + " - Exception: " + e.getMessage());
+							System.out.println("CANNOT OPEN FILE: " + fileName + " - Exception: " + e.getMessage());
 							e.printStackTrace();
 						}
 
-						logger.info("Start retrieving tweets of user ID: "  + userId);
+						System.out.println("\n-\nStart retrieving tweets of user ID: "  + userId);
 						// Paging
 						Integer pageNum = 1;
 						Integer elementsPerPage = 40;
 						Boolean nextPage = true;
-
+						
+						ArrayList<String> tweetsToStore = new ArrayList<String>();
 						while(nextPage) {
 							Paging pagingInstance = new Paging();
 							pagingInstance.setPage(pageNum);
 							pagingInstance.setCount(elementsPerPage);
 							try {
-								logger.info("Retrieving tweets of user ID: "  + userId + ", page: " + pageNum + ". Tweets per page: " + elementsPerPage + ", already stored: " + storedUSerTweets);
+								System.out.println("Retrieving tweets of user ID: "  + userId + ", page: " + pageNum + ". Tweets per page: " + elementsPerPage + ", already stored: " + storedUSerTweets);
 
 								Twitter currentAccountToQuery =  twitterList.get(accountCredentialsId);
 								logger.info("Queried account: "  + accountCredentialsId);
 								accountCredentialsId = (accountCredentialsId + 1) % consumerKey.size();
 								ResponseList<Status> timeline = currentAccountToQuery.getUserTimeline(userId, pagingInstance);
 								pageNum++;
-								
+
 								Thread.sleep(sleepTimeInMilliseconds);
 
 								if(timeline != null && timeline.size() > 0) {
@@ -168,14 +148,12 @@ public class TwitterRESTAccountTimelineCrawler {
 										Status status = statusIter.next();
 										if(status != null && status.getCreatedAt() != null) {
 											String msg = DataObjectFactory.getRawJSON(status);
-											logger.info("   STORING > " + msg);
-											
-											twitterTimelinePW.write(msg + "\n");
-											
-											logger.info("STORED");
+											if(msg == null) {
+												System.out.println("ERROR > INVALID TWEET RETRIEVED!");
+												continue;
+											}
+											tweetsToStore.add(msg);
 											storedUSerTweets++;
-											twitterTimelinePW.flush();
-											
 										}
 									}
 								}
@@ -188,6 +166,30 @@ public class TwitterRESTAccountTimelineCrawler {
 								e.printStackTrace();
 							}
 						}
+						
+						// Store to file
+						System.out.println("\nStoring " + tweetsToStore.size() + " tweets in " + outpuTweetFormat + " format:");
+						int storageCount = 0;
+						for(String tweet : tweetsToStore)  {
+							
+							if(tweet != null) {
+								if(outpuTweetFormat.equals("tab")) {
+									Status status = DataObjectFactory.createStatus(tweet);
+									twitterTimelinePW.write(status.getId() + "\t" + ((status.getText() != null) ? status.getText().replace("\n", " ") : "") + "\n");
+									storageCount++;
+								}
+								else {
+									twitterTimelinePW.write(tweet + "\n");
+									storageCount++;
+								}
+							}
+							
+						}
+						
+						twitterTimelinePW.flush();
+						
+						System.out.println(storageCount + " tweet stored to file: " + fileName);
+						System.out.println("Execution terminated.");
 					}
 				}
 			}
@@ -199,6 +201,167 @@ public class TwitterRESTAccountTimelineCrawler {
 	}
 
 	public static void main(String[] args) {
+		if(args == null || args.length == 0 || args[0] == null || args[0].trim().equals("")) {
+			System.out.println("Please, specify the full local path to the crawler ptoperty file as first argument!");
+			return;
+		}
+
+		File crawlerPropertyFile = new File(args[0].trim());
+		if(crawlerPropertyFile == null || !crawlerPropertyFile.exists() || !crawlerPropertyFile.isFile()) {
+			System.out.println("The path of the crawler ptoperty file (first argument) is wrongly specified > PATH: '" + ((args[0] != null) ? args[0].trim() : "NULL") + "'");
+			return;
+		}
+
+
+		// Load information from property file
+		PropertyManager propManager = new PropertyManager();
+		propManager.setPropertyFilePath(args[0].trim());
+
+		// Load credential objects
+		System.out.println("Loading twitter API credentials from the property file at '" + args[0].trim() + "':");
+		List<CredentialObject> credentialObjList = PropertyUtil.loadCredentialObjects(propManager);
+		if(credentialObjList != null && credentialObjList.size() > 0) {
+			for(CredentialObject credentialObj : credentialObjList) {
+				if(credentialObj != null && credentialObj.isValid()) {
+					consumerKey.add(credentialObj.getConsumerKey());
+					consumerSecret.add(credentialObj.getConsumerSecret());
+					token.add(credentialObj.getToken());
+					tokenSecret.add(credentialObj.getTokenSecret());
+				}
+				else {
+					System.out.println("      - ERROR > INVALID CREDENTIAL SET: " + ((credentialObj != null) ? credentialObj.toString() : "NULL OBJECT"));
+				}
+			}
+		}
+
+		// Load full path of tweetID file
+		try {
+			String timelineListFilePath = propManager.getProperty(PropertyManager.RESTtweetTimelineListPath);
+			File tweetIDfile = new File(timelineListFilePath);
+			if(tweetIDfile == null || !tweetIDfile.exists() || !tweetIDfile.isFile()) {
+				System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.RESTtweetTimelineListPath + "')"
+						+ " wrongly specified > PATH: '" + ((timelineListFilePath != null) ? timelineListFilePath : "NULL") + "'");
+				if(tweetIDfile != null && !tweetIDfile.exists()) {
+					System.out.println("      The file does not exist!"); 
+				}
+				if(tweetIDfile != null && tweetIDfile.exists() && !tweetIDfile.isFile()) {
+					System.out.println("      The path does not point to a valid file!"); 
+				}
+				return;
+			}
+			else {
+				fullPathOfTweetTimelineFile = timelineListFilePath;
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.RESTtweetTimelineListPath + "')"
+					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			return;
+		}
+
+		// Load full path of output directory
+		try {
+			String outputDirectoryFilePath = propManager.getProperty(PropertyManager.RESTtweetTimelineFullPathOfOutputDir);
+			File outputDirFile = new File(outputDirectoryFilePath);
+			if(outputDirFile == null || !outputDirFile.exists() || !outputDirFile.isDirectory()) {
+				System.out.println("ERROR: output directory full path (property '" + PropertyManager.RESTtweetTimelineFullPathOfOutputDir + "')"
+						+ " wrongly specified > PATH: '" + ((outputDirectoryFilePath != null) ? outputDirectoryFilePath : "NULL") + "'");
+				if(outputDirFile != null && !outputDirFile.exists()) {
+					System.out.println("      The directory does not exist!"); 
+				}
+				if(outputDirFile != null && outputDirFile.exists() && !outputDirFile.isDirectory()) {
+					System.out.println("      The path does not point to a valid directory!"); 
+				}
+				return;
+			}
+			else {
+				outputDirPath = outputDirectoryFilePath;
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR: output directory full path (property '" + PropertyManager.RESTtweetTimelineFullPathOfOutputDir + "')"
+					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			return;
+		}
+
+		// Output format
+		try {
+			String outputFormat = propManager.getProperty(PropertyManager.RESTtweetTimelineOutputFormat);
+
+			if(outputFormat != null && outputFormat.trim().toLowerCase().equals("json")) {
+				outpuTweetFormat = "json";
+			}
+			else if(outputFormat != null && outputFormat.trim().toLowerCase().equals("tab")) {
+				outpuTweetFormat = "tab";
+			}
+			else {
+				outpuTweetFormat = "json";
+				System.out.println("Impossible to read the '" + PropertyManager.RESTtweetTimelineOutputFormat + "' property - set to: " + outpuTweetFormat);
+			}
+
+		} catch (Exception e) {
+			System.out.println("ERROR: output format (property '" + PropertyManager.RESTtweetTimelineOutputFormat + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			return;
+		}
+
+		// Loading tweet keywords from file
+		// Per line ACCOUNT NAME <TAB> ACCOUNT_ID_LONG
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(fullPathOfTweetTimelineFile)), "UTF-8"));
+
+			String str;
+			while ((str = in.readLine()) != null) {
+				if(!str.trim().equals("")) {
+					try {
+						String[] strDiv = str.trim().split("\t");
+						
+						getTimelines.put(strDiv[0], Long.valueOf(strDiv[1].trim()));
+					}
+					catch(Exception e) {
+						e.printStackTrace();
+						System.out.println("Impossible to parse the account line:' " + str + "' from file: '" + fullPathOfTweetTimelineFile + "'");
+					}
+				}
+			}
+
+			in.close();
+		}
+		catch (Exception e) {
+			System.out.println("Exception reading tweet accounts from file: " +  e.getMessage() + " > PATH: '" + ((fullPathOfTweetTimelineFile != null) ? fullPathOfTweetTimelineFile : "NULL") + "'");
+			return;
+		}
+
+
+		File storageDir = new File(outputDirPath);
+
+
+		// Printing arguments:
+		System.out.println("\n***************************************************************************************");
+		System.out.println("******************** LOADED PARAMETERS ************************************************");
+		System.out.println("   > Property file loaded from path: '" + ((args[0].trim() != null) ? args[0].trim() : "NULL") + "'");
+		System.out.println("        PROPERTIES:");
+		System.out.println("           - NUMBER OF TWITTER API CREDENTIALS: " + ((consumerKey != null) ? consumerKey.size() : "ERROR"));
+		System.out.println("           - PATH OF LIST OF TWEET ID TO CRAWL: '" + ((fullPathOfTweetTimelineFile != null) ? fullPathOfTweetTimelineFile : "NULL") + "'");
+		System.out.println("           - PATH OF CRAWLER OUTPUT FOLDER: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
+		System.out.println("           - OUTPUT FORMAT: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
+		System.out.println("   -");
+		System.out.println("   NUMBER OF TWEET TIMELINES / LINES READ FROM THE LIST: " + ((getTimelines != null) ? getTimelines.size() : "READING ERROR"));
+		System.out.println("***************************************************************************************\n");		
+
+		if(getTimelines == null || getTimelines.size() == 0) {
+			System.out.println("Empty list of Tweet timelines to crawl > EXIT");
+			return;
+		}
+
+		if(consumerKey == null || consumerKey.size() == 0) {
+			System.out.println("Empty list of valid Twitter API credentials > EXIT");
+			return;
+		}
+
+		try {
+			Thread.sleep(4000);
+		} catch (InterruptedException e) {
+			/* Do nothing */
+		}
+		
 		startCrawling();
 	}
 

@@ -8,8 +8,8 @@
 	<description>Utility classes to gather data by relying on Twitter REST and STREAMING endpoints - based on https://github.com/twitter/hbc</description>
 
 	<properties>
-		<jdk.version>1.8</jdk.version>
-		<builddir>/home/francesco/Eclipse_WS/twitter-crawler/target</builddir>
+		<jdk.version>1.7</jdk.version>
+		<builddir>/home/ronzano/Eclipse_WS/twitter-crawler/target</builddir>
 		<project.build.directory>target</project.build.directory>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -58,7 +58,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<!-- <mainClass></mainClass> -->
+							<mainClass>org.backingdata.twitter.crawler.streaming.TwitterSTREAMHashtagCrawler</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 
 import org.backingdata.twitter.crawler.streaming.model.Bbox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Constants;
@@ -58,7 +59,7 @@ import twitter4j.json.DataObjectFactory;
  */
 public class TwitterSTREAMBboxCrawler {
 	
-	private static Logger logger = Logger.getLogger(TwitterSTREAMBboxCrawler.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(TwitterSTREAMBboxCrawler.class.getName());
 
 	private String fileSharedName = "twitter_STOPes_bbox_v1";
 
@@ -79,13 +80,15 @@ public class TwitterSTREAMBboxCrawler {
 	private Map<String, PrintWriter> storageFileMap = new HashMap<String, PrintWriter>(); // Pointer to file to store tweets of each location
 	private Map<String, Integer> storageFileCount = new HashMap<String, Integer>(); // Counter of tweets stored for each location
 	private Map<String, Integer> storageFileId = new HashMap<String, Integer>();
+	private Map<String, Long> storageFileLastTimestamp = new HashMap<String, Long>();
 
 	private PrintWriter logFile = null;
 	private Integer logFileId = 0;
-	private Integer totalTweetStoredCount = 0;
+	private Integer totalTweetStoredCount = 1;
 
 	private Integer changeFileNumTweets = 20000;
 	private Integer changeLogFileNumTweets = 80000;
+	private Long storeMaxOneTweetEveryXseconds = -5l;
 
 	// Date formatter
 	private SimpleDateFormat sdf = new SimpleDateFormat("dd_M_yyyy__hh_mm_ss");
@@ -112,7 +115,13 @@ public class TwitterSTREAMBboxCrawler {
 		if(storageFileCount.size() == 0) {
 			for(Map.Entry<String, Bbox> entry : trackBbox.entrySet()) {
 				String key = entry.getKey();
-				storageFileCount.put(key, 0);
+				storageFileCount.put(key, 1);
+			}
+		}
+		if(storageFileLastTimestamp.size() == 0) {
+			for(Map.Entry<String, Bbox> entry : trackBbox.entrySet()) {
+				String key = entry.getKey();
+				storageFileLastTimestamp.put(key, 0l);
 			}
 		}
 		if(storageFileId.size() == 0) {
@@ -382,6 +391,22 @@ public class TwitterSTREAMBboxCrawler {
 
 													for(Map.Entry<String, Integer> entry_int_int : storageFileCount.entrySet()) {
 														if(entry_int_int.getKey().equals(locationString)) {
+															
+															// Management of storeMaxOneTweetEveryXseconds
+															if(storeMaxOneTweetEveryXseconds != null && storeMaxOneTweetEveryXseconds > 0l) {
+																Long lastTimestamp = storageFileLastTimestamp.get(locationString);
+																if(lastTimestamp != null && (System.currentTimeMillis() - lastTimestamp) < (storeMaxOneTweetEveryXseconds * 1000l)) {
+																	System.out.println("SKIPPED TWEET FOR LOCATION: " + locationString + " - only  " + (System.currentTimeMillis() - lastTimestamp) + " ms (< " + storeMaxOneTweetEveryXseconds + "s)"
+																			+ "since last tweet received - queue free places: " + queue.remainingCapacity());
+																	continue;
+																}
+																else {
+																	storageFileLastTimestamp.put(locationString, 0l);
+																}
+															}
+															storageFileLastTimestamp.put(locationString, System.currentTimeMillis());
+															
+															
 															Integer storageCount = entry_int_int.getValue();
 															storageFileCount.put(locationString, storageCount + 1);
 															System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
