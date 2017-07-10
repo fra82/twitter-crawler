@@ -1,5 +1,13 @@
 # twitter-crawler
-Configurable Twitter Crawlers (Java based) useful to gather data by both the REST and STREAMING endpoints and based on [hbc-twitter4j](https://mvnrepository.com/artifact/com.twitter/hbc-twitter4j "hbc-twitter4j").  
+Configurable Twitter Crawlers (Java based) useful to gather data by both the REST and STREAMING endpoints and based on [hbc-twitter4j](https://mvnrepository.com/artifact/com.twitter/hbc-twitter4j "hbc-twitter4j").
+
+Core features:
+ * timeline, keyword and user based crawling (REST endpoints) / keyword, user and bounding box based crawling (STREAMING endpoint)
+ * complete configuration of crawlers by means of a property file (download the Jar, set up a property file and start crawling,as explained in [Set up Twitter crawlers](#setUpTwitterCralwers));
+ * support to manage pools of [Twitter credentials ](https://apps.twitter.com/)
+ * storage of results in text files (UTF-8) containing one tweet per line in [JSON format](https://dev.twitter.com/overview/api/tweets, "JSON format of tweet"). For instance for the keyword crawler stores the tweets retrieved in one file per keyword per 20,000 tweets;
+ * storage of log files.
+
 
 The following Twitter Crawlers are availabe:
  * **Account Timeline Crawler** (REST endpoint): exploit a pool of Twitter credentials to gather the latest tweets from the timelines of a collection of Twitter accounts (org.backingdata.twitter.crawler.rest.TwitterRESTAccountTimelineCrawler);
@@ -8,17 +16,13 @@ The following Twitter Crawlers are availabe:
  * **Keyword Filtered Crawler** (STREAMING endpoint): define a set of keywords (hashtags) to filter and store tweets from the [public stream (filter endpoint)](https://dev.twitter.com/streaming/reference/post/statuses/filter "public stream (filter endpoint)") - twitter can be optionally filtered also with respect to one or more languages (org.backingdata.twitter.crawler.streaming.TwitterSTREAMHashtagCrawler);
  * **Bounding box Filtered Crawler** (STREAMING endpoint): define a set of bounding boxes to filter and store tweets from the [public stream (filter endpoint)](https://dev.twitter.com/streaming/reference/post/statuses/filter "public stream (filter endpoint)") - (org.backingdata.twitter.crawler.streaming.TwitterSTREAMBboxCrawler).
 
-Each one of these crawlers can be **set up in few simple steps** as explained in the next paragraph 'Set up Twitter crawlers'; the configuration parameters of each crawler can be specified by means of a **property file** (referred to as crawler.properties).
+Each one of these crawlers can be **set up in few simple steps by directly downloading and executing a JAR file** as explained in the next paragraph [Set up Twitter crawlers](#setUpTwitterCralwers); the configuration parameters of each crawler (Twitter credentials' pool, list of users, keywords, bounding boxes, etx.) can be specified by means of a **property file** (referred to as crawler.properties).
 
-Each crawler properly manages:
- * storage of results in different '.txt' files (UTF-8) containing one tweet per line in [JSON format](https://dev.twitter.com/overview/api/tweets, "JSON format of tweet"). For instance for the keyword crawler, one file per keyword per 20,000 tweets retrieved is created;
- * storage of log files.
- 
 When using the Bounding box Filtered Crawler, you can rely on [this web interface](http://penggalian.org/bbox/ "bounding box Web interface") to easily define the coordinates of each bounding box.
 
 The code implementig each Twitter Crawler is commented into details.
 
-
+<a name="setUpTwitterCralwers"></a>
 ## Set up Twitter crawlers
 
 In order to execute one of the previous crawlers you shuld carry out the following steps:
@@ -38,9 +42,9 @@ Depending on the crawler you are goning to use, the FULLY_QUALIFIED_NAME_OF_CRAW
  * **Keyword Filtered Crawler** (STREAMING endpoint): ```org.backingdata.twitter.crawler.streaming.TwitterSTREAMHashtagCrawler```;
  * **Bounding box Filtered Crawler** (STREAMING endpoint): ```org.backingdata.twitter.crawler.streaming.TwitterSTREAMBboxCrawler```.
 
-For each one of the previous crawlers, all the crawling parameters (Twitter credentials' pool, list of users, keywords, bounding boxes, etx.) can be specified by means of the crawler.property file (```/full/local/path/to/crawler.properties```). In what follows, for each Twitter crawler,t he format of the related configuration file si described:
+For each one of the previous crawlers, all the crawling parameters (Twitter credentials' pool, list of users, keywords, bounding boxes, etx.) can be specified by means of the crawler.property file (```/full/local/path/to/crawler.properties```). In what follows, for each Twitter crawler, the format of the related configuration file si described.
 
-### **Account Timeline Crawler** (REST endpoint): configuration file
+### Configuration file format of **Account Timeline Crawler** (REST endpoint)
 Example of the configuration file of an Account Timeline Crawler (create a crawler.properties file and copy&paste this content, then customize it by specifying your crawler configuration parameters):
 ```
 # Pool of credentials to use to crawl (each pool is specified by four properties ending with
@@ -82,7 +86,7 @@ bbc	808633423300624384
 arxiv	808633423300624384
 ```
 
- ### **Keyword Crawler** (REST endpoint): configuration file
+ ### Configuration file format of  **Keyword Crawler** (REST endpoint)
 Example of the configuration file of an Keyword Crawler (create a crawler.properties file and copy&paste this content, then customize it by specifying your crawler configuration parameters):
  
 ```
@@ -126,7 +130,7 @@ madonna
 ```
 
 
- ### **ID list Crawler** (REST endpoint): configuration file
+ ### Configuration file format of **ID list Crawler** (REST endpoint)
 Example of the configuration file of an ID list Crawler (create a crawler.properties file and copy&paste this content, then customize it by specifying your crawler configuration parameters):
  
 ```
@@ -166,7 +170,7 @@ Example of file with list of tweet IDs to crawl (```tweetID.fullPathTweetIDs```)
 883176086162464769
 ```
 
- ### **Keyword Filtered Crawler** (STREAMING endpoint): configuration file
+ ### Configuration file format of **Keyword Filtered Crawler** (STREAMING endpoint)
 Example of the configuration file of an Keyword Filtered Crawler (create a crawler.properties file and copy&paste this content, then customize it by specifying your crawler configuration parameters):
  
 ```
@@ -215,7 +219,7 @@ arxiv	808633423300624384
 ```
  
  
- ### **Bounding box Filtered Crawler** (STREAMING endpoint)
+ ### Configuration file format of  **Bounding box Filtered Crawler** (STREAMING endpoint)
  Example of the configuration file of an Bounding box Filtered Crawler (create a crawler.properties file and copy&paste this content, then customize it by specifying your crawler configuration parameters):
  ```
 # Pool of credentials to use to crawl 
