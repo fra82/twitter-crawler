@@ -5,7 +5,7 @@ Core features:
  * timeline, keyword and user based crawling (REST endpoints) / keyword, user and bounding box based crawling (STREAMING endpoint)
  * complete configuration of crawlers by means of a property file (download the Jar, set up a property file and start crawling,as explained in [Set up Twitter crawlers](#setUpTwitterCralwers));
  * support to manage pools of [Twitter credentials ](https://apps.twitter.com/)
- * storage of results in text files (UTF-8) containing one tweet per line in [JSON format](https://dev.twitter.com/overview/api/tweets, "JSON format of tweet"). For instance for the keyword crawler stores the tweets retrieved in one file per keyword per 20,000 tweets;
+ * storage of results in text files (UTF-8) containing one tweet per line in [JSON format](https://dev.twitter.com/overview/api/tweets "JSON format of tweet"). For instance for the keyword crawler stores the tweets retrieved in one file per keyword per 20,000 tweets;
  * storage of log files.
 
 
@@ -27,7 +27,7 @@ The code implementig each Twitter Crawler is commented into details.
 
 In order to execute one of the previous crawlers you shuld carry out the following steps:
 
-1. Download the latest JAR of the [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip "twitter-crawler library") (currently in its version 3.0). Alternatively you can directly clone the code from GitHub and build the library by maven;
+1. Download the latest JAR of the [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip "twitter-crawler library") (currently in its version 0.3). Alternatively you can directly clone the code from GitHub and build the library by maven;
 2. After downloading the library from [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip "twitter-crawler library"), extract the file twitter-crawler-0.3-bin.zip;
 3. Enter the folder 'twitter-crawler-0.3-bin' that contains the extracted library files and execute the following command:
 ```
