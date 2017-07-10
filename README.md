@@ -27,8 +27,8 @@ The code implementig each Twitter Crawler is commented into details.
 
 In order to execute one of the previous crawlers you shuld carry out the following steps:
 
-1. Download the latest JAR of the [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip, "twitter-crawler library") (currently in its version 3.0). Alternatively you can directly clone the code from GitHub and build the library by maven;
-2. After downloading the library from [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip, "twitter-crawler library"), extract the file twitter-crawler-0.3-bin.zip;
+1. Download the latest JAR of the [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip "twitter-crawler library") (currently in its version 3.0). Alternatively you can directly clone the code from GitHub and build the library by maven;
+2. After downloading the library from [twitter-crawler library](http://backingdata.org/twitter-crawler/0.3/twitter-crawler-0.3-bin.zip "twitter-crawler library"), extract the file twitter-crawler-0.3-bin.zip;
 3. Enter the folder 'twitter-crawler-0.3-bin' that contains the extracted library files and execute the following command:
 ```
 java -cp twitter-crawler-0.3.jar FULLY_QUALIFIED_NAME_OF_CRAWLER_CLASS /full/local/path/to/crawler.properties
