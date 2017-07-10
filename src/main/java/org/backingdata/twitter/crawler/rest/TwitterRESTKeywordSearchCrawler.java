@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.backingdata.twitter.crawler.util.CredentialObject;
 import org.backingdata.twitter.crawler.util.PropertyManager;
@@ -278,7 +279,7 @@ public class TwitterRESTKeywordSearchCrawler {
 			String keywordlistFilePath = propManager.getProperty(PropertyManager.RESTtweetKeywordListPath);
 			File tweetIDfile = new File(keywordlistFilePath);
 			if(tweetIDfile == null || !tweetIDfile.exists() || !tweetIDfile.isFile()) {
-				System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.RESTtweetKeywordListPath + "')"
+				System.out.println("ERROR: keyword list input file path (property '" + PropertyManager.RESTtweetKeywordListPath + "')"
 						+ " wrongly specified > PATH: '" + ((keywordlistFilePath != null) ? keywordlistFilePath : "NULL") + "'");
 				if(tweetIDfile != null && !tweetIDfile.exists()) {
 					System.out.println("      The file does not exist!"); 
@@ -393,11 +394,11 @@ public class TwitterRESTKeywordSearchCrawler {
 		System.out.println("           - LANGUAGE FILTER: " + ((languageFilter != null) ? languageFilter : "ERROR"));
 		System.out.println("           - PATH OF LIST OF KEYWORDS TO CRAWL: '" + ((fullPathOfTweetKeywordFile != null) ? fullPathOfTweetKeywordFile : "NULL") + "'");
 		System.out.println("           - PATH OF CRAWLER OUTPUT FOLDER: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
-		System.out.println("           - OUTPUT FORMAT: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
+		System.out.println("           - OUTPUT FORMAT: '" + ((outpuTweetFormat != null) ? outpuTweetFormat : "NULL") + "'");
 		System.out.println("   -");
 		System.out.println("   NUMBER OF TWEET KEYWORDS / LINES READ FROM THE LIST: " + ((getKeywords != null) ? getKeywords.size() : "READING ERROR"));
 		System.out.println("***************************************************************************************\n");		
-
+		
 		if(getKeywords == null || getKeywords.size() == 0) {
 			System.out.println("Empty list of Tweet keyword to crawl > EXIT");
 			return;
@@ -407,7 +408,22 @@ public class TwitterRESTKeywordSearchCrawler {
 			System.out.println("Empty list of valid Twitter API credentials > EXIT");
 			return;
 		}
+		
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+		System.out.println("List of keywords to crawl:");
+		int keywordCounter = 1;
+		for(String keyword : getKeywords) {
+			System.out.println(keywordCounter++ + " keyword: " + keyword);
+		}
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+		
 
+		System.out.println("-----------------------------------------------------------------------------------");
+		System.out.println("YOU'RE GOING TO USE " + ((consumerKey != null) ? consumerKey.size() : "ERROR") + " TWITTER DEVELOPER CREDENTIAL(S).");
+		System.out.println("INCREASE YOUR CREDENTIAL NUMBER IN THE CONFIGURATION FILE IF YOU NEED TO INCREASE CRAWLING SPEED");
+		System.out.println("-----------------------------------------------------------------------------------\n");
+		
+		
 		try {
 			Thread.sleep(4000);
 		} catch (InterruptedException e) {

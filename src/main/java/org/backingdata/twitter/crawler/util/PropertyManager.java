@@ -26,19 +26,25 @@ public class PropertyManager {
 	
 	public static final String RESTtweetKeywordListPath = "tweetKeyword.fullPathKeywordList";
 	public static final String RESTtweetKeywordFullPathOfOutputDir = "tweetKeyword.fullOutputDirPath";
-	public static final String RESTtweetKeywordOutputFormat = "tweetID.outputFormat";
-	public static final String RESTtweetKeywordLimitByLanguage = "tweetID.languageFilter";
+	public static final String RESTtweetKeywordOutputFormat = "tweetKeyword.outputFormat";
+	public static final String RESTtweetKeywordLimitByLanguage = "tweetKeyword.languageFilter";
 	
-	public static final String RESTtweetTimelineListPath = "tweetTimeline.fullPathKeywordList";
+	public static final String RESTtweetTimelineListPath = "tweetTimeline.fullPathAccountIDs";
 	public static final String RESTtweetTimelineFullPathOfOutputDir = "tweetTimeline.fullOutputDirPath";
 	public static final String RESTtweetTimelineOutputFormat = "tweetTimeline.outputFormat";
 	
 	public static final String STREAMkeywordListPath = "tweetSTREAMkeyword.fullPathKeywordList";
-	public static final String STREAMuserListPath = "tweetSTREAM.fullPathUserList";
-	public static final String STREAMfullPathOfOutputDir = "tweetSTREAM.fullOutputDirPath";
-	public static final String STREAMoutputFormat = "tweetSTREAM.outputFormat";
-	public static final String STREAMlimitByLanguage = "tweetSTREAM.languageFilter";
-	public static final String STREAMlimitByOneTweetPerXsec = "tweetSTREAM.limitByOneTweetPerXsec";
+	public static final String STREAMkeywordUserListPath = "tweetSTREAMkeyword.fullPathUserList";
+	public static final String STREAMkeywordFullPathOfOutputDir = "tweetSTREAMkeyword.fullOutputDirPath";
+	public static final String STREAMkeywordOutputFormat = "tweetSTREAMkeyword.outputFormat";
+	public static final String STREAMkeywordLimitByLanguage = "tweetSTREAMkeyword.languageFilter";
+	public static final String STREAMkeywordLimitByOneTweetPerXsec = "tweetSTREAMkeyword.limitByOneTweetPerXsec";
+	
+	public static final String STREAMbboxListPath = "tweetSTREAMbbox.fullPathBoundingBoxes";
+	public static final String STREAMbboxFullPathOfOutputDir = "tweetSTREAMbbox.fullOutputDirPath";
+	public static final String STREAMbboxOutputFormat = "tweetSTREAMbbox.outputFormat";
+	public static final String STREAMbboxLimitByLanguage = "weetSTREAMbbox.languageFilter";
+	
 	
 	private String propertyPath;
 	private Properties holder = null; 

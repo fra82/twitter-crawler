@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.backingdata.twitter.crawler.util.CredentialObject;
 import org.backingdata.twitter.crawler.util.PropertyManager;
@@ -158,7 +159,7 @@ public class TwitterRESTAccountTimelineCrawler {
 									}
 								}
 								else {
-									logger.info("Retrieved NO tweets (user ID: "  + userId + ", page: " + (pageNum - 1) + ". Tweets per page: " + elementsPerPage + ", already stored: " + storedUSerTweets + ")");
+									logger.info("Retrieved NO tweets (user ID: "  + userId + ", page: " + (pageNum - 1) + ". Tweets per page: " + elementsPerPage + ", already retrieved: " + storedUSerTweets + ")");
 									nextPage = false;
 								}
 							} catch (TwitterException e) {
@@ -202,7 +203,7 @@ public class TwitterRESTAccountTimelineCrawler {
 
 	public static void main(String[] args) {
 		if(args == null || args.length == 0 || args[0] == null || args[0].trim().equals("")) {
-			System.out.println("Please, specify the full local path to the crawler ptoperty file as first argument!");
+			System.out.println("Please, specify the full local path to the crawler property file as first argument!");
 			return;
 		}
 
@@ -239,7 +240,7 @@ public class TwitterRESTAccountTimelineCrawler {
 			String timelineListFilePath = propManager.getProperty(PropertyManager.RESTtweetTimelineListPath);
 			File tweetIDfile = new File(timelineListFilePath);
 			if(tweetIDfile == null || !tweetIDfile.exists() || !tweetIDfile.isFile()) {
-				System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.RESTtweetTimelineListPath + "')"
+				System.out.println("ERROR: account IDs input file path (property '" + PropertyManager.RESTtweetTimelineListPath + "')"
 						+ " wrongly specified > PATH: '" + ((timelineListFilePath != null) ? timelineListFilePath : "NULL") + "'");
 				if(tweetIDfile != null && !tweetIDfile.exists()) {
 					System.out.println("      The file does not exist!"); 
@@ -253,7 +254,7 @@ public class TwitterRESTAccountTimelineCrawler {
 				fullPathOfTweetTimelineFile = timelineListFilePath;
 			}
 		} catch (Exception e) {
-			System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.RESTtweetTimelineListPath + "')"
+			System.out.println("ERROR: account IDs input file path (property '" + PropertyManager.RESTtweetTimelineListPath + "')"
 					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
@@ -339,11 +340,11 @@ public class TwitterRESTAccountTimelineCrawler {
 		System.out.println("   > Property file loaded from path: '" + ((args[0].trim() != null) ? args[0].trim() : "NULL") + "'");
 		System.out.println("        PROPERTIES:");
 		System.out.println("           - NUMBER OF TWITTER API CREDENTIALS: " + ((consumerKey != null) ? consumerKey.size() : "ERROR"));
-		System.out.println("           - PATH OF LIST OF TWEET ID TO CRAWL: '" + ((fullPathOfTweetTimelineFile != null) ? fullPathOfTweetTimelineFile : "NULL") + "'");
+		System.out.println("           - PATH OF LIST OF ACCOUNT ID TO CRAWL: '" + ((fullPathOfTweetTimelineFile != null) ? fullPathOfTweetTimelineFile : "NULL") + "'");
 		System.out.println("           - PATH OF CRAWLER OUTPUT FOLDER: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
-		System.out.println("           - OUTPUT FORMAT: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
+		System.out.println("           - OUTPUT FORMAT: '" + ((outpuTweetFormat != null) ? outpuTweetFormat : "NULL") + "'");
 		System.out.println("   -");
-		System.out.println("   NUMBER OF TWEET TIMELINES / LINES READ FROM THE LIST: " + ((getTimelines != null) ? getTimelines.size() : "READING ERROR"));
+		System.out.println("   NUMBER OF TWEET ACCOUNT IDS / LINES READ FROM THE LIST: " + ((getTimelines != null) ? getTimelines.size() : "READING ERROR"));
 		System.out.println("***************************************************************************************\n");		
 
 		if(getTimelines == null || getTimelines.size() == 0) {
@@ -355,7 +356,22 @@ public class TwitterRESTAccountTimelineCrawler {
 			System.out.println("Empty list of valid Twitter API credentials > EXIT");
 			return;
 		}
+		
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+		System.out.println("List of account to crawl timeline:");
+		int timelineCountetr = 1;
+		for(Entry<String, Long> timeplineInfio : getTimelines.entrySet()) {
+			System.out.println(timelineCountetr++ + " NAME: " + timeplineInfio.getKey() + " > ID: " + timeplineInfio.getValue());
+		}
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+		
 
+		System.out.println("-----------------------------------------------------------------------------------");
+		System.out.println("YOU'RE GOING TO USE " + ((consumerKey != null) ? consumerKey.size() : "ERROR") + " TWITTER DEVELOPER CREDENTIAL(S).");
+		System.out.println("INCREASE YOUR CREDENTIAL NUMBER IN THE CONFIGURATION FILE IF YOU NEED TO INCREASE CRAWLING SPEED");
+		System.out.println("-----------------------------------------------------------------------------------\n");
+		
+		
 		try {
 			Thread.sleep(4000);
 		} catch (InterruptedException e) {

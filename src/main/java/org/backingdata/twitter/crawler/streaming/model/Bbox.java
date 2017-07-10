@@ -94,6 +94,11 @@ public class Bbox {
 		
 		return latDist * lngDist;
 	}
+
+	@Override
+	public String toString() {
+		return "Bbox [lngSW=" + lngSW + ", latSW=" + latSW + ", lngNE=" + lngNE + ", latNE=" + latNE + "]";
+	}
 	
 	
 }

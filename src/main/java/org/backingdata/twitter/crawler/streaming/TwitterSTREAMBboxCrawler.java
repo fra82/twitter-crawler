@@ -1,7 +1,10 @@
 package org.backingdata.twitter.crawler.streaming;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
@@ -10,10 +13,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.backingdata.twitter.crawler.streaming.model.Bbox;
+import org.backingdata.twitter.crawler.util.CredentialObject;
+import org.backingdata.twitter.crawler.util.PropertyManager;
+import org.backingdata.twitter.crawler.util.PropertyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +65,11 @@ import twitter4j.json.DataObjectFactory;
  *
  */
 public class TwitterSTREAMBboxCrawler {
-	
+
 	private static Logger logger = LoggerFactory.getLogger(TwitterSTREAMBboxCrawler.class.getName());
 
-	private String fileSharedName = "twitter_STOPes_bbox_v1";
+	private String fileSharedName = "twitter_bbox_v1";
+	private String fullPathOfBoundingBoxesFile = "";
 
 	// Authentication
 	public List<String> consumerKey = new ArrayList<String>();
@@ -75,8 +83,17 @@ public class TwitterSTREAMBboxCrawler {
 	// Blocking queue for tweets to process
 	private BlockingQueue<String> queue = new LinkedBlockingQueue<String>(10000);
 
+	// Output directory
+	private String outputDirPath = "";
+
+	// Output format
+	private String outpuTweetFormat = "";
+	
+	// Language list
+	public List<String> langList = new ArrayList<String>();
+
 	// Storage parameters
-	private static File storageDir = null;
+	private static File outputDir = null;
 	private Map<String, PrintWriter> storageFileMap = new HashMap<String, PrintWriter>(); // Pointer to file to store tweets of each location
 	private Map<String, Integer> storageFileCount = new HashMap<String, Integer>(); // Counter of tweets stored for each location
 	private Map<String, Integer> storageFileId = new HashMap<String, Integer>();
@@ -92,11 +109,11 @@ public class TwitterSTREAMBboxCrawler {
 
 	// Date formatter
 	private SimpleDateFormat sdf = new SimpleDateFormat("dd_M_yyyy__hh_mm_ss");
-	
+
 	// Appo vars
 	private Map<String, List<String>> storageFileTweetList = new HashMap<String, List<String>>(); // Pointer to String list to store tweets of each location
 	private List<String> logFileList = new ArrayList<String>();
-	
+
 	public synchronized void checkLogAndSotrageFiles() {
 
 		// Init maps
@@ -138,14 +155,14 @@ public class TwitterSTREAMBboxCrawler {
 			if( storageFileMap.containsKey(locationString) && storageFileCount.containsKey(locationString) && storageFileId.containsKey(locationString) ) {
 
 				if( storageFileMap.get(locationString) != null && ((storageFileCount.get(locationString) % this.changeFileNumTweets) == 0)) {
-					
+
 					// Store in log file all messages in logFileList
 					for(String storageFileMessage : storageFileTweetList.get(locationString)) {
 						if(storageFileMessage != null && storageFileMessage.trim().length() > 0) {
 							storageFileMap.get(locationString).write(storageFileMessage + "\n");
 						}
 					}
-					
+
 					storageFileMap.get(locationString).flush();
 					storageFileMap.get(locationString).close();
 					storageFileMap.put(locationString, null);
@@ -153,7 +170,7 @@ public class TwitterSTREAMBboxCrawler {
 					// Increase the number of storage count to not generate other files if the tweet is not stored
 					Integer storageCountAppo = storageFileCount.get(locationString);
 					storageFileCount.put(locationString, ++storageCountAppo);
-					
+
 					storageFileTweetList.put(locationString, new ArrayList<String>());
 				}
 			}			
@@ -166,7 +183,7 @@ public class TwitterSTREAMBboxCrawler {
 					logFile.write(logFileMessage);
 				}
 			}
-			
+
 			logFile.flush();
 			logFile.close();
 			logFile = null;
@@ -182,7 +199,7 @@ public class TwitterSTREAMBboxCrawler {
 			if( storageFileMap.containsKey(locationString) && storageFileCount.containsKey(locationString) && storageFileId.containsKey(locationString) ) {
 
 				if(storageFileMap.get(locationString) == null) {
-					String fileName = storageDir.getAbsolutePath() + File.separator + fileSharedName + "_" + ( storageFileId.get(locationString) ) + "_" + locationString + "_from_" + sdf.format(new Date()) + ".txt";
+					String fileName = outputDir.getAbsolutePath() + File.separator + fileSharedName + "_" + ( storageFileId.get(locationString) ) + "_" + locationString + "_from_" + sdf.format(new Date()) + ".txt";
 					Integer fileId = storageFileId.get(locationString);
 					storageFileId.put(locationString, fileId + 1);
 					try {
@@ -199,7 +216,7 @@ public class TwitterSTREAMBboxCrawler {
 		}
 
 		if(logFile == null) {
-			String fileName = storageDir.getAbsolutePath() + File.separator + "LOG_" + fileSharedName + "_" + ( logFileId++ ) + "_from_" + sdf.format(new Date()) + ".txt";
+			String fileName = outputDir.getAbsolutePath() + File.separator + "LOG_" + fileSharedName + "_" + ( logFileId++ ) + "_from_" + sdf.format(new Date()) + ".txt";
 			try {
 				logFile = new PrintWriter(fileName, "UTF-8");
 			} catch (FileNotFoundException e) {
@@ -330,17 +347,25 @@ public class TwitterSTREAMBboxCrawler {
 		}
 
 		endpoint.locations(locList);
+		
+		if(this.langList != null && this.langList.size() > 0) {
+			endpoint.languages(this.langList);
+			logger.info("CRAWLING: " + this.langList.size() + " LANGUAGES:");
+			for(String language : this.langList) {
+				logger.info("   LANGUAGE: " + language);
+			}
+		}
 
 		Authentication auth = new OAuth1(this.consumerKey.get(0), this.consumerSecret.get(0), this.token.get(0), this.tokenSecret.get(0));
 
 		// Create a new BasicClient. By default gzip is enabled.
 		BasicClient client = new ClientBuilder()
-		.hosts(Constants.STREAM_HOST)
-		.endpoint(endpoint)
-		.authentication(auth)
-		.processor(new StringDelimitedProcessor(queue))
-		.build();
-		
+				.hosts(Constants.STREAM_HOST)
+				.endpoint(endpoint)
+				.authentication(auth)
+				.processor(new StringDelimitedProcessor(queue))
+				.build();
+
 		// Establish a connection
 		client.connect();
 
@@ -378,7 +403,7 @@ public class TwitterSTREAMBboxCrawler {
 													// Store to file
 													// entry_int.getValue().write(msg);
 													// entry_int.getValue().flush();
-													
+
 													inOneBbox = true;
 													totalTweetStoredCount++;
 
@@ -391,7 +416,7 @@ public class TwitterSTREAMBboxCrawler {
 
 													for(Map.Entry<String, Integer> entry_int_int : storageFileCount.entrySet()) {
 														if(entry_int_int.getKey().equals(locationString)) {
-															
+
 															// Management of storeMaxOneTweetEveryXseconds
 															if(storeMaxOneTweetEveryXseconds != null && storeMaxOneTweetEveryXseconds > 0l) {
 																Long lastTimestamp = storageFileLastTimestamp.get(locationString);
@@ -405,8 +430,8 @@ public class TwitterSTREAMBboxCrawler {
 																}
 															}
 															storageFileLastTimestamp.put(locationString, System.currentTimeMillis());
-															
-															
+
+
 															Integer storageCount = entry_int_int.getValue();
 															storageFileCount.put(locationString, storageCount + 1);
 															System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
@@ -494,9 +519,9 @@ public class TwitterSTREAMBboxCrawler {
 
 														double areaInKmQuad = areaPlace;
 														double maxAreaInKmQuad = 100d;
-														
+
 														if(areaInKmQuad <= 100d ) {
-															
+
 															// Check if one corner of the place BBOX is inside one of the BBOXes to crawl
 															boolean inOneBbox = false;
 
@@ -539,7 +564,7 @@ public class TwitterSTREAMBboxCrawler {
 																logFileList.add("DISCARTED INTERSECTING PLACE: " + ((receivedStatus.getPlace().getName() != null) ? receivedStatus.getPlace().getName() : "NULL") +
 																		"\n WITH AREA: " + areaInKmQuad + " Km2 (" + latitudeDiff + " * " + longitudeDiff + ") > NOT INTERSECTING BBOX.\n");
 															}
-															
+
 														}
 														else {
 															logFileList.add("IGNORED INTERSECTING PLACE: " + ((receivedStatus.getPlace().getName() != null) ? receivedStatus.getPlace().getName() : "NULL") +
@@ -607,39 +632,227 @@ public class TwitterSTREAMBboxCrawler {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if(args != null && args.length > 0 && args[0] != null && !args[0].equals("")) {
-			try {
-				File stgDir = new File(args[0]);
-				if(stgDir != null && stgDir.exists() && stgDir.isDirectory()) {
-					storageDir = stgDir;
-				}
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Exception setting storage dir: " + e.getMessage());
-				logger.info("Exception setting storage dir: " + e.getMessage());	
-			}
+		
+		if(args == null || args.length == 0 || args[0] == null || args[0].trim().equals("")) {
+			System.out.println("Please, specify the full local path to the crawler property file as first argument!");
+			return;
 		}
-		System.out.println("Storage dir: " + storageDir.getAbsolutePath());
-		logger.info("Storage dir: " + storageDir.getAbsolutePath());
 
+		File crawlerPropertyFile = new File(args[0].trim());
+		if(crawlerPropertyFile == null || !crawlerPropertyFile.exists() || !crawlerPropertyFile.isFile()) {
+			System.out.println("The path of the crawler ptoperty file (first argument) is wrongly specified > PATH: '" + ((args[0] != null) ? args[0].trim() : "NULL") + "'");
+			return;
+		}
 
 		TwitterSTREAMBboxCrawler crawler = new TwitterSTREAMBboxCrawler();
+
+		// Load information from property file
+		PropertyManager propManager = new PropertyManager();
+		propManager.setPropertyFilePath(args[0].trim());
+
+		// Load credential objects
+		System.out.println("Loading twitter API credentials from the property file at '" + args[0].trim() + "':");
+		List<CredentialObject> credentialObjList = PropertyUtil.loadCredentialObjects(propManager);
+		if(credentialObjList != null && credentialObjList.size() > 0) {
+			for(CredentialObject credentialObj : credentialObjList) {
+				if(credentialObj != null && credentialObj.isValid()) {
+					crawler.consumerKey.add(credentialObj.getConsumerKey());
+					crawler.consumerSecret.add(credentialObj.getConsumerSecret());
+					crawler.token.add(credentialObj.getToken());
+					crawler.tokenSecret.add(credentialObj.getTokenSecret());
+				}
+				else {
+					System.out.println("      - ERROR > INVALID CREDENTIAL SET: " + ((credentialObj != null) ? credentialObj.toString() : "NULL OBJECT"));
+				}
+			}
+		}
+
+		// Load full path of keyword list file
+		try {
+			String bboxesListFilePath = propManager.getProperty(PropertyManager.STREAMbboxListPath);
+			File bboxesListFile = new File(bboxesListFilePath);
+			if(bboxesListFile == null || !bboxesListFile.exists() || !bboxesListFile.isFile()) {
+				System.out.println("ERROR: bounding box list input file path (property '" + PropertyManager.STREAMbboxListPath + "')"
+						+ " wrongly specified > PATH: '" + ((bboxesListFilePath != null) ? bboxesListFilePath : "NULL") + "'");
+				if(bboxesListFile != null && !bboxesListFile.exists()) {
+					System.out.println("      The file does not exist!"); 
+				}
+				if(bboxesListFile != null && bboxesListFile.exists() && !bboxesListFile.isFile()) {
+					System.out.println("      The path does not point to a valid file!"); 
+				}
+			}
+			else {
+				crawler.fullPathOfBoundingBoxesFile = bboxesListFilePath;
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR: bounding box list input file path (property '" + PropertyManager.STREAMbboxListPath + "')"
+					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+		}
+
+
+		// Load full path of output directory
+		try {
+			String outputDirectoryFilePath = propManager.getProperty(PropertyManager.STREAMbboxFullPathOfOutputDir);
+			File outputDirFile = new File(outputDirectoryFilePath);
+			if(outputDirFile == null || !outputDirFile.exists() || !outputDirFile.isDirectory()) {
+				System.out.println("ERROR: output directory full path (property '" + PropertyManager.STREAMbboxFullPathOfOutputDir + "')"
+						+ " wrongly specified > PATH: '" + ((outputDirectoryFilePath != null) ? outputDirectoryFilePath : "NULL") + "'");
+				if(outputDirFile != null && !outputDirFile.exists()) {
+					System.out.println("      The directory does not exist!"); 
+				}
+				if(outputDirFile != null && outputDirFile.exists() && !outputDirFile.isDirectory()) {
+					System.out.println("      The path does not point to a valid directory!"); 
+				}
+				return;
+			}
+			else {
+				crawler.outputDirPath = outputDirectoryFilePath;
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR: output directory full path (property '" + PropertyManager.STREAMbboxFullPathOfOutputDir + "')"
+					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			return;
+		}
+
+		// Output format
+		try {
+			String outputFormat = propManager.getProperty(PropertyManager.STREAMbboxOutputFormat);
+
+			if(outputFormat != null && outputFormat.trim().toLowerCase().equals("json")) {
+				crawler.outpuTweetFormat = "json";
+			}
+			else if(outputFormat != null && outputFormat.trim().toLowerCase().equals("tab")) {
+				crawler.outpuTweetFormat = "tab";
+			}
+			else {
+				crawler.outpuTweetFormat = "json";
+				System.out.println("Impossible to read the '" + PropertyManager.STREAMbboxOutputFormat + "' property - set to: " + crawler.outpuTweetFormat);
+			}
+
+		} catch (Exception e) {
+			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMbboxOutputFormat + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			return;
+		}
+
+
+		// Language filter
+		try {
+			String langFilter = propManager.getProperty(PropertyManager.STREAMbboxLimitByLanguage);
+
+			if(langFilter != null) {
+				String[] langArray = langFilter.split(",");
+
+				for(String lang : langArray) {
+					if(lang != null && !lang.equals("")) {
+						crawler.langList.add(lang);
+					}
+				}
+			}
+			else {
+				crawler.langList = new ArrayList<String>();
+				System.out.println("Impossible to read the '" + PropertyManager.STREAMbboxLimitByLanguage + "' property - Language filter not set");
+			}
+
+		} catch (Exception e) {
+			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMbboxLimitByLanguage + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			return;
+		}
 		
-		// Add Twitter credentials
-		crawler.consumerKey.add("PUT_CONSUMER_KEY");
-		crawler.consumerSecret.add("PUT_CONSUMER_SECRET");
-		crawler.token.add("PUT_ACCESS_TOKEN");
-		crawler.tokenSecret.add("PUT_ACCESS_KEY");
 		
-		// Set bounding boxes to retrieve tweets by providing a name and the coordinates (lngSW, latSW, lngNE, latNE)
-		crawler.trackBbox.put("BoundingBOX_name_1", new Bbox(2.1378493309020996d,41.386549170992275d,2.139415740966797d,41.387885371627185));
-		crawler.trackBbox.put("BoundingBOX_name_2", new Bbox(2.1878493309020996d,42.386549170992275d,2.189415740966797d,42.387885371627185));
+		// Loading tweet keywords from file
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(crawler.fullPathOfBoundingBoxesFile)), "UTF-8"));
+
+			String str;
+			while ((str = in.readLine()) != null) {
+				if(!str.trim().equals("")) {
+					// Add bbox to crawl
+					String[] bboxNameCoordSplit = str.split("\t");
+					
+					if(bboxNameCoordSplit != null && bboxNameCoordSplit.length == 2 && 
+							bboxNameCoordSplit[0] != null && bboxNameCoordSplit[0].trim().length() > 0 &&
+							bboxNameCoordSplit[1] != null && bboxNameCoordSplit[1].trim().length() > 0) {
+						
+						String[] bboxCoordinatesSplit = bboxNameCoordSplit[1].trim().split(",");
+						
+						if(bboxCoordinatesSplit != null && bboxCoordinatesSplit.length == 4) {
+							Double lngSW = null;
+							Double latSW = null;
+							Double lngNE = null;
+							Double latNE = null;
+							
+							try { lngSW = Double.valueOf(bboxCoordinatesSplit[0]);	} catch(Exception e) { /* Do nothintg */}
+							try { latSW = Double.valueOf(bboxCoordinatesSplit[1]);	} catch(Exception e) { /* Do nothintg */}
+							try { lngNE = Double.valueOf(bboxCoordinatesSplit[2]);	} catch(Exception e) { /* Do nothintg */}
+							try { latNE = Double.valueOf(bboxCoordinatesSplit[3]);	} catch(Exception e) { /* Do nothintg */}
+							
+							if(lngSW != null && latSW != null && lngNE != null && latNE != null) {
+								Bbox boundingBoxObject = new Bbox(lngSW, latSW, lngNE, latNE);
+								
+								crawler.trackBbox.put(bboxNameCoordSplit[0], boundingBoxObject);
+							}
+							else {
+								System.out.println("Impossible to parse bounding box coordinates values of the following line of the bounding box file '" + ((str != null) ? str : "NULL") + "'");
+							}
+							
+						}
+						else {
+							System.out.println("Impossible to parse bounding box coordinates of the following line of the bounding box file '" + ((str != null) ? str : "NULL") + "'");
+						}
+						
+						
+						
+					}
+					else {
+						System.out.println("Impossible to read the following line of the bounding box file '" + ((str != null) ? str : "NULL") + "'");
+					}
+				}
+			}
+
+			in.close();
+		}
+		catch (Exception e) {
+			System.out.println("Exception reading bounding boxes names and coordinates from file: " +  e.getMessage() + " > PATH: '" + ((crawler.fullPathOfBoundingBoxesFile != null) ? crawler.fullPathOfBoundingBoxesFile : "NULL") + "'");
+		}
 		
-		// Print bounding boxe
-		logger.info("AREAS:");
-		for(Map.Entry<String, Bbox> entry : crawler.trackBbox.entrySet()) {
-			logger.info("   > " + entry.getKey() + " --> Area: " + entry.getValue().getArea());
+		crawler.outputDir = new File(crawler.outputDirPath);
+
+		// Printing arguments:
+		System.out.println("\n***************************************************************************************");
+		System.out.println("******************** LOADED PARAMETERS ************************************************");
+		System.out.println("   > Property file loaded from path: '" + ((args[0].trim() != null) ? args[0].trim() : "NULL") + "'");
+		System.out.println("        PROPERTIES:");
+		System.out.println("           - NUMBER OF TWITTER API CREDENTIALS: " + ((crawler.consumerKey != null) ? crawler.consumerKey.size() : "ERROR"));
+		System.out.println("           - LANGUAGE FILTER: " + ((crawler.langList != null) ? crawler.langList : "ERROR"));
+		System.out.println("           - PATH OF LIST OF BOUNDING BOXES TO CRAWL: '" + ((crawler.fullPathOfBoundingBoxesFile != null) ? crawler.fullPathOfBoundingBoxesFile : "NULL") + "'");
+		System.out.println("           - PATH OF CRAWLER OUTPUT FOLDER: '" + ((crawler.outputDirPath != null) ? crawler.outputDirPath : "NULL") + "'");
+		System.out.println("           - OUTPUT FORMAT: '" + ((crawler.outputDirPath != null) ? crawler.outputDirPath : "NULL") + "'");
+		System.out.println("   -");
+		System.out.println("   NUMBER OF BOUNDING BOXES / LINES READ FROM THE LIST: " + ((crawler.trackBbox != null) ? crawler.trackBbox.size() : "READING ERROR"));
+		System.out.println("***************************************************************************************\n");
+
+		if(crawler.trackBbox == null || crawler.trackBbox.size() == 0) {
+			System.out.println("Empty list of bounding boxes to crawl > EXIT");
+			return;
+		}
+
+		if(crawler.consumerKey == null || crawler.consumerKey.size() == 0) {
+			System.out.println("Empty list of valid Twitter API credentials > EXIT");
+			return;
+		}
+		
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+		System.out.println("List of bounding boxes to crawl:");
+		int bboxCounter = 1;
+		for(Entry<String, Bbox> bboxElem : crawler.trackBbox.entrySet()) {
+			System.out.println(bboxCounter++ + " Bbox: " + bboxElem.getKey() + " > Coords: " + bboxElem.getValue().toString() + ", AREA: " + bboxElem.getValue().getArea());
+		}
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+
+		try {
+			Thread.sleep(4000);
+		} catch (InterruptedException e) {
+			/* Do nothing */
 		}
 
 		crawler.startCrawling();

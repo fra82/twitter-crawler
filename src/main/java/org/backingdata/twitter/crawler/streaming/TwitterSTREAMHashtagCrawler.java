@@ -62,7 +62,7 @@ public class TwitterSTREAMHashtagCrawler {
 
 	private static Logger logger = LoggerFactory.getLogger(TwitterSTREAMHashtagCrawler.class.getName());
 
-	private String fileSharedName = "twitter_drugs_v1";
+	private String fileSharedName = "twitter_stream_v1";
 
 	// Authentication
 	public List<String> consumerKey = new ArrayList<String>();
@@ -70,7 +70,7 @@ public class TwitterSTREAMHashtagCrawler {
 	public List<String> token = new ArrayList<String>();
 	public List<String> tokenSecret = new ArrayList<String>();
 
-	// Terms
+	// Terms and language
 	public List<String> trackTerms = new ArrayList<String>();
 	public List<String> langList = new ArrayList<String>();
 	public Map<String, Long> userMap = new HashMap<String, Long>();
@@ -93,7 +93,7 @@ public class TwitterSTREAMHashtagCrawler {
 
 
 	// Storage parameters
-	private File storageDir = null;
+	private static File storageDir = null;
 	private Map<String, PrintWriter> storageFileMap = new HashMap<String, PrintWriter>();
 	private Map<String, Integer> storageFileCount = new HashMap<String, Integer>();
 	private Map<String, Integer> storageFileId = new HashMap<String, Integer>();
@@ -597,8 +597,9 @@ public class TwitterSTREAMHashtagCrawler {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
 		if(args == null || args.length == 0 || args[0] == null || args[0].trim().equals("")) {
-			System.out.println("Please, specify the full local path to the crawler ptoperty file as first argument!");
+			System.out.println("Please, specify the full local path to the crawler property file as first argument!");
 			return;
 		}
 
@@ -656,10 +657,10 @@ public class TwitterSTREAMHashtagCrawler {
 
 		// Load full path of users file
 		try {
-			String userlistFilePath = propManager.getProperty(PropertyManager.STREAMuserListPath);
+			String userlistFilePath = propManager.getProperty(PropertyManager.STREAMkeywordUserListPath);
 			File tweetIDfile = new File(userlistFilePath);
 			if(tweetIDfile == null || !tweetIDfile.exists() || !tweetIDfile.isFile()) {
-				System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.STREAMuserListPath + "')"
+				System.out.println("ERROR: Tweet ID input file path (property '" + PropertyManager.STREAMkeywordUserListPath + "')"
 						+ " wrongly specified > PATH: '" + ((userlistFilePath != null) ? userlistFilePath : "NULL") + "'");
 				if(tweetIDfile != null && !tweetIDfile.exists()) {
 					System.out.println("      The file does not exist!"); 
@@ -672,17 +673,17 @@ public class TwitterSTREAMHashtagCrawler {
 				crawler.fullPathOfTweetTimelineFile = userlistFilePath;
 			}
 		} catch (Exception e) {
-			System.out.println("ERROR: user list input file path (property '" + PropertyManager.STREAMuserListPath + "')"
+			System.out.println("ERROR: user list input file path (property '" + PropertyManager.STREAMkeywordUserListPath + "')"
 					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 		}
 
 
 		// Load full path of output directory
 		try {
-			String outputDirectoryFilePath = propManager.getProperty(PropertyManager.STREAMfullPathOfOutputDir);
+			String outputDirectoryFilePath = propManager.getProperty(PropertyManager.STREAMkeywordFullPathOfOutputDir);
 			File outputDirFile = new File(outputDirectoryFilePath);
 			if(outputDirFile == null || !outputDirFile.exists() || !outputDirFile.isDirectory()) {
-				System.out.println("ERROR: output directory full path (property '" + PropertyManager.STREAMfullPathOfOutputDir + "')"
+				System.out.println("ERROR: output directory full path (property '" + PropertyManager.STREAMkeywordFullPathOfOutputDir + "')"
 						+ " wrongly specified > PATH: '" + ((outputDirectoryFilePath != null) ? outputDirectoryFilePath : "NULL") + "'");
 				if(outputDirFile != null && !outputDirFile.exists()) {
 					System.out.println("      The directory does not exist!"); 
@@ -696,14 +697,14 @@ public class TwitterSTREAMHashtagCrawler {
 				crawler.outputDirPath = outputDirectoryFilePath;
 			}
 		} catch (Exception e) {
-			System.out.println("ERROR: output directory full path (property '" + PropertyManager.STREAMfullPathOfOutputDir + "')"
+			System.out.println("ERROR: output directory full path (property '" + PropertyManager.STREAMkeywordFullPathOfOutputDir + "')"
 					+ " wrongly specified - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
 
 		// Output format
 		try {
-			String outputFormat = propManager.getProperty(PropertyManager.STREAMoutputFormat);
+			String outputFormat = propManager.getProperty(PropertyManager.STREAMkeywordOutputFormat);
 
 			if(outputFormat != null && outputFormat.trim().toLowerCase().equals("json")) {
 				crawler.outpuTweetFormat = "json";
@@ -713,18 +714,18 @@ public class TwitterSTREAMHashtagCrawler {
 			}
 			else {
 				crawler.outpuTweetFormat = "json";
-				System.out.println("Impossible to read the '" + PropertyManager.STREAMoutputFormat + "' property - set to: " + crawler.outpuTweetFormat);
+				System.out.println("Impossible to read the '" + PropertyManager.STREAMkeywordOutputFormat + "' property - set to: " + crawler.outpuTweetFormat);
 			}
 
 		} catch (Exception e) {
-			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMoutputFormat + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMkeywordOutputFormat + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
 
 
 		// Limit by one tweet per X seconds
 		try {
-			String limitRate = propManager.getProperty(PropertyManager.STREAMlimitByOneTweetPerXsec);
+			String limitRate = propManager.getProperty(PropertyManager.STREAMkeywordLimitByOneTweetPerXsec);
 
 			if(limitRate != null && !limitRate.trim().equals("")) {
 				try {
@@ -732,7 +733,7 @@ public class TwitterSTREAMHashtagCrawler {
 				}
 				catch(Exception e) {
 					crawler.storeMaxOneTweetEveryXseconds = -1l;
-					System.out.println("Impossible to read the '" + PropertyManager.STREAMlimitByOneTweetPerXsec + "' property - set to: " + crawler.storeMaxOneTweetEveryXseconds);
+					System.out.println("Impossible to read the '" + PropertyManager.STREAMkeywordLimitByOneTweetPerXsec + "' property - set to: " + crawler.storeMaxOneTweetEveryXseconds);
 				}
 			}
 			else {
@@ -740,7 +741,7 @@ public class TwitterSTREAMHashtagCrawler {
 			}
 
 		} catch (Exception e) {
-			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMlimitByOneTweetPerXsec + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMkeywordLimitByOneTweetPerXsec + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
 
@@ -748,7 +749,7 @@ public class TwitterSTREAMHashtagCrawler {
 
 		// Language filter
 		try {
-			String langFilter = propManager.getProperty(PropertyManager.STREAMlimitByLanguage);
+			String langFilter = propManager.getProperty(PropertyManager.STREAMkeywordLimitByLanguage);
 
 			if(langFilter != null) {
 				String[] langArray = langFilter.split(",");
@@ -761,11 +762,11 @@ public class TwitterSTREAMHashtagCrawler {
 			}
 			else {
 				crawler.langList = new ArrayList<String>();
-				System.out.println("Impossible to read the '" + PropertyManager.STREAMlimitByLanguage + "' property - Language filter not set");
+				System.out.println("Impossible to read the '" + PropertyManager.STREAMkeywordLimitByLanguage + "' property - Language filter not set");
 			}
 
 		} catch (Exception e) {
-			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMlimitByLanguage + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
+			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMkeywordLimitByLanguage + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
 
@@ -849,6 +850,20 @@ public class TwitterSTREAMHashtagCrawler {
 			System.out.println("Empty list of valid Twitter API credentials > EXIT");
 			return;
 		}
+		
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
+		System.out.println("List of keywords to crawl:");
+		int keywordCounter = 1;
+		for(String keyword : crawler.trackTerms) {
+			System.out.println(keywordCounter++ + " keyword: " + keyword);
+		}
+		
+		System.out.println("\nList of users to crawl:");
+		int userCounter = 1;
+		for(Entry<String, Long> userEntry : crawler.userMap.entrySet()) {
+			System.out.println(userCounter++ + " Username: " + userEntry.getKey() + " > " + userEntry.getValue());
+		}
+		System.out.println("<><><><><><><><><><><><><><><><><><><>");
 
 		try {
 			Thread.sleep(4000);

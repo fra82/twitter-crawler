@@ -304,7 +304,7 @@ public class TwitterRESTTweetIDlistCrawler {
 		System.out.println("           - NUMBER OF TWITTER API CREDENTIALS: " + ((consumerKey != null) ? consumerKey.size() : "ERROR"));
 		System.out.println("           - PATH OF LIST OF TWEET ID TO CRAWL: '" + ((fullPathOfTweetIDfile != null) ? fullPathOfTweetIDfile : "NULL") + "'");
 		System.out.println("           - PATH OF CRAWLER OUTPUT FOLDER: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
-		System.out.println("           - OUTPUT FORMAT: '" + ((outputDirPath != null) ? outputDirPath : "NULL") + "'");
+		System.out.println("           - OUTPUT FORMAT: '" + ((outpuTweetFormat != null) ? outpuTweetFormat : "NULL") + "'");
 		System.out.println("   -");
 		System.out.println("   NUMBER OF TWEET IDs / LINES READ FROM THE LIST: " + ((tweetIDset != null) ? tweetIDset.size() : "READING ERROR"));
 		System.out.println("***************************************************************************************\n");		
@@ -318,6 +318,13 @@ public class TwitterRESTTweetIDlistCrawler {
 			System.out.println("Empty list of valid Twitter API credentials > EXIT");
 			return;
 		}
+		
+
+		System.out.println("-----------------------------------------------------------------------------------");
+		System.out.println("YOU'RE GOING TO USE " + ((consumerKey != null) ? consumerKey.size() : "ERROR") + " TWITTER DEVELOPER CREDENTIAL(S).");
+		System.out.println("INCREASE YOUR CREDENTIAL NUMBER IN THE CONFIGURATION FILE IF YOU NEED TO INCREASE CRAWLING SPEED");
+		System.out.println("-----------------------------------------------------------------------------------\n");
+		
 		
 		try {
 			Thread.sleep(4000);
