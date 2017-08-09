@@ -108,7 +108,8 @@ public class TwitterRESTTweetIDlistCrawler {
 			System.out.println("Storing tweets to: '" + fileName + "'");
 
 			Integer accountCredentialsId = 0;
-
+			Integer tweetsCount = 0;
+			
 			List<String> tweetToStore = new ArrayList<String>();
 			if(tweetIDset != null && tweetIDset.size() > 0) {
 				for(String entry : tweetIDset) {
@@ -128,11 +129,39 @@ public class TwitterRESTTweetIDlistCrawler {
 									continue;
 								}
 								tweetToStore.add(msg);
+								tweetsCount++;
 								System.out.println(" - Retrieved tweet with ID: " + entry + " waiting " + sleepTimeInMilliseconds + " milliseconds...");
 							}
 
 							Thread.currentThread().sleep(sleepTimeInMilliseconds);
-
+							
+							if(tweetsCount % 100 == 0 && tweetToStore.size() > 0) {
+								// Store to file
+								System.out.println("\nStoring " + tweetToStore.size() + " tweets in " + outpuTweetFormat + " format:");
+								int storageCount = 0;
+								for(String tweet : tweetToStore)  {
+									
+									if(tweet != null) {
+										if(outpuTweetFormat.equals("tab")) {
+											Status statusInt = DataObjectFactory.createStatus(tweet);
+											twitterIDPW.write(statusInt.getId() + "\t" + ((statusInt.getText() != null) ? statusInt.getText().replace("\n", " ") : "") + "\n");
+											storageCount++;
+										}
+										else {
+											twitterIDPW.write(tweet + "\n");
+											storageCount++;
+										}
+									}
+									
+								}
+								
+								tweetToStore = new ArrayList<String>();
+								
+								twitterIDPW.flush();
+								
+								System.out.println(storageCount + " tweet stored to file: " + fileName);
+							}
+							
 						}
 						catch (TwitterException te) {
 							System.out.println("ERROR: Couldn't connect: " + te.getMessage());
@@ -165,6 +194,7 @@ public class TwitterRESTTweetIDlistCrawler {
 			twitterIDPW.flush();
 			
 			System.out.println(storageCount + " tweet stored to file: " + fileName);
+			
 			System.out.println("Execution terminated.");
 			
 		} catch (Exception e) {
