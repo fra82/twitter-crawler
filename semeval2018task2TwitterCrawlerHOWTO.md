@@ -23,7 +23,7 @@ The Twitter crawler has to be executed by Java 1.7 or newer. As a consequence, a
 
  ## Crawler Execution
  
- 1. Download the Twitter Crawler from [here](http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz) (download URL: http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz)
+ 1. Download the Twitter Crawler from the following download URL: http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz)
  2. Decompress the tar.gz archive and open the folder 'semeval-2018-task2-twitter-crawler-0.4'
  3. Download the ***Tweet IDs text file*** from [Multilingual Emoji Prediction (SemEval-2018 Task 2)](https://competitions.codalab.org/competitions/17117)
  4. By means of a text editor, modify the ***configuration text file*** named 'crawler.properties' present in the folder 'semeval-2018-task2-twitter-crawler-0.4', by specifying:
