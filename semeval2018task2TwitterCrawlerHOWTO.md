@@ -39,7 +39,7 @@ java -cp './twitter-crawler-0.4.jar:./lib/*' org.backingdata.twitter.crawler.res
  7. Once terminated the cralwing process, the results will be stored in a text file (one [Tweet object in JSON format](https://dev.twitter.com/overview/api/tweets) per line) in the output folder specified by means of the ***configuration text file***
  
  ## Support</h2>
-If you need any help, please [send us an email+(mailto:francesco.ronzano@upf.edu?Subject=Semeval2018_Crawler_Issue). 
+If you need any help, please [send us an email](mailto:francesco.ronzano@upf.edu?Subject=Semeval2018_Crawler_Issue). 
 
 
 
