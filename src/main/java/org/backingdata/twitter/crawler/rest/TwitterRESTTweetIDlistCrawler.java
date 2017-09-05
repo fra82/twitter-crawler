@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -20,6 +21,9 @@ import org.backingdata.twitter.crawler.util.PropertyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.primitives.Longs;
+
+import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -66,14 +70,14 @@ public class TwitterRESTTweetIDlistCrawler {
 	private static String fileSharedName = "tweet_by_ID";
 
 	// Blocking queue for tweets to process
-	private static Integer sleepTimeInMilliseconds = 5000;
+	private static Integer sleepTimeInMilliseconds = 4000;
 
 	// Date formatter
 	private static SimpleDateFormat sdf = new SimpleDateFormat("dd_M_yyyy__hh_mm_ss");
 
 	public static void startCrawling() {
 
-		sleepTimeInMilliseconds = new Integer( ((int) (5000d / new Double(consumerKey.size()))) + 250);
+		sleepTimeInMilliseconds = new Integer( ((int) (4000d / new Double(consumerKey.size()))) + 250);
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true).setJSONStoreEnabled(true);
@@ -110,78 +114,141 @@ public class TwitterRESTTweetIDlistCrawler {
 			Integer accountCredentialsId = 0;
 			Integer tweetIDsAnalyzed = 0;
 			Integer tweetsCount = 0;
-			Integer tweetsErrorCount = 0;
+			Integer tweetsNotRetrievedCount = 0;
+			Integer tweetsStorageErrorCount = 0;
 			
 			List<String> tweetToStore = new ArrayList<String>();
 			if(tweetIDset != null && tweetIDset.size() > 0) {
+				// Divide Tweet IDs in 100 ids batches to retrieve by lookup
+				List<List<String>> batchesOfIDs = new ArrayList<List<String>>();
+				
+				int batchCounter = 0;
+				List<String> batchGroup = new ArrayList<String>();
 				for(String entry : tweetIDset) {
 					if(entry != null && !entry.equals("")) {
-						
-						tweetIDsAnalyzed++;
-
-						try {
-							Twitter currentAccountToQuery =  twitterList.get(accountCredentialsId);
-							logger.debug("Queried account: "  + accountCredentialsId);
-							accountCredentialsId = (accountCredentialsId + 1) % consumerKey.size();
-
-							Status status = currentAccountToQuery.showStatus(Long.valueOf(entry));
-							
-							if(status != null && status.getCreatedAt() != null) {
-								String msg = DataObjectFactory.getRawJSON(status);
-								if(msg == null) {
-									System.out.println("ERROR > INVALID TWEET RETRIEVED!");
-									continue;
-								}
-								tweetToStore.add(msg);
-								tweetsCount++;
-								System.out.println(" - Retrieved tweet with ID: " + entry + " waiting " + sleepTimeInMilliseconds + " milliseconds...");
-							}
-							else {
-								System.out.println("ERROR (tweet with ID: " + entry + "): Couldn't retrieve. \n ");
-								tweetsErrorCount++;
-							}
-
-							Thread.currentThread().sleep(sleepTimeInMilliseconds);
-							
-							if(tweetsCount % 100 == 0 && tweetToStore.size() > 0) {
-								// Store to file
-								System.out.println("\n***\nStoring " + tweetToStore.size() + " tweets in " + outpuTweetFormat + " format:");
-								int storageCount = 0;
-								for(String tweet : tweetToStore)  {
-									
-									if(tweet != null) {
-										if(outpuTweetFormat.equals("tab")) {
-											Status statusInt = DataObjectFactory.createStatus(tweet);
-											twitterIDPW.write(statusInt.getId() + "\t" + ((statusInt.getText() != null) ? statusInt.getText().replace("\n", " ") : "") + "\n");
-											storageCount++;
-										}
-										else {
-											twitterIDPW.write(tweet + "\n");
-											storageCount++;
-										}
-									}
-									
-								}
-								
-								tweetToStore = new ArrayList<String>();
-								
-								twitterIDPW.flush();
-								
-								System.out.println(storageCount + " tweets stored to file: " + fileName);
-								System.out.println("\n");
-								System.out.println("Total tweet IDs analyzed: " + tweetIDsAnalyzed + " of which:");
-								System.out.println("   - tweets stored to as JSON objects: " + tweetsCount + "\n***\n");
-								System.out.println("   - tweets not retrieved (error - unavailable): " + tweetsErrorCount + "\n***\n");
-							}
-							
+						if(batchCounter < 99) {
+							batchGroup.add(entry);
+							batchCounter++;
 						}
-						catch (TwitterException te) {
-							System.out.println("ERROR (tweet with ID: " + entry + "): Couldn't connect: \n " + te.getMessage());
-							tweetsErrorCount++;
-						} 
-
+						else {
+							batchGroup.add(entry);
+							batchesOfIDs.add(batchGroup);
+							batchGroup = new ArrayList<String>();
+							batchCounter = 0;
+						}
 					}
 				}
+				if(batchGroup != null && batchGroup.size() > 0) {
+					batchesOfIDs.add(batchGroup);
+				}
+				
+				// Retrieve tweets for each batch group
+				System.out.println("Start retrieving Tweet data from " + batchesOfIDs.size() + " groups of 100 tweet IDs...");
+				
+				for(List<String> batchOfIDs : batchesOfIDs) {
+					
+					try {
+						tweetIDsAnalyzed += batchOfIDs.size();
+						
+						Twitter currentAccountToQuery =  twitterList.get(accountCredentialsId);
+						logger.debug("Queried account: "  + accountCredentialsId);
+						accountCredentialsId = (accountCredentialsId + 1) % consumerKey.size();
+						
+						List<Long> longList = new ArrayList<Long>();
+						for(String IDelem : batchOfIDs) {
+							try {
+								longList.add(Long.valueOf(IDelem));
+							}
+							catch(Exception e) {
+								// Do nothing
+							}
+						}
+						
+						long[] longListArr = Longs.toArray(longList);
+						
+						if(batchOfIDs.size() != longListArr.length) {
+							System.out.println("Attention: got " + longListArr.length + " long Tweet IDs from a list of " + batchOfIDs.size() + " batch IDs.");
+						}
+						
+						ResponseList<Status> statusList = currentAccountToQuery.lookup(longListArr);
+						
+						System.out.println("Retrieved " + ((statusList != null) ? statusList.size() : "0") + " Tweet statuses from a list of " + longListArr.length + " long Tweet IDs (list of " + batchOfIDs.size() + " batch IDs)");
+						
+						if((longListArr.length - statusList.size()) > 0) {
+							tweetsNotRetrievedCount += (longListArr.length - statusList.size());
+						}
+						
+						Iterator<Status> statusIter = statusList.iterator();
+						
+						int localStoreCount = 0;
+						while(statusIter.hasNext()) {
+							try {
+								Status status = statusIter.next();
+								
+								if(status != null && status.getCreatedAt() != null) {
+									String msg = DataObjectFactory.getRawJSON(status);
+									if(msg == null) {
+										System.out.println("ERROR > INVALID TWEET RETRIEVED!");
+										continue;
+									}
+									tweetToStore.add(msg);
+									tweetsCount++;
+									localStoreCount++;
+								}
+								else {
+									System.out.println("ERROR (tweet with ID: " + status.getId() + "): Couldn't retrieve. \n ");
+									tweetsStorageErrorCount++;
+								}
+							}
+							catch (Exception te) {
+								System.out.println("ERROR (storing single tweet): Couldn't connect: \n " + te.getMessage());
+								tweetsStorageErrorCount++;
+							}
+						}
+						
+						System.out.println("Added " + localStoreCount + " Tweet statuses to store - waiting " + sleepTimeInMilliseconds + " milliseconds...");
+						
+						Thread.currentThread().sleep(sleepTimeInMilliseconds);
+						
+						if(tweetToStore != null && tweetToStore.size() > 1000) {
+							// Store to file
+							System.out.println("\n***\nStoring " + tweetToStore.size() + " tweets in " + outpuTweetFormat + " format:");
+							int storageCount = 0;
+							for(String tweet : tweetToStore)  {
+								
+								if(tweet != null) {
+									if(outpuTweetFormat.equals("tab")) {
+										Status statusInt = DataObjectFactory.createStatus(tweet);
+										twitterIDPW.write(statusInt.getId() + "\t" + ((statusInt.getText() != null) ? statusInt.getText().replace("\n", " ") : "") + "\n");
+										storageCount++;
+									}
+									else {
+										twitterIDPW.write(tweet + "\n");
+										storageCount++;
+									}
+								}
+								
+							}
+							
+							tweetToStore = new ArrayList<String>();
+							
+							twitterIDPW.flush();
+							
+							System.out.println(storageCount + " tweets stored to file: " + fileName);
+							System.out.println("\n");
+							System.out.println("Total tweet IDs analyzed: " + tweetIDsAnalyzed + " of which:");
+							System.out.println("   - tweets stored to as JSON objects: " + tweetsCount);
+							System.out.println("   - tweets not retrieved (error - unavailable): " + tweetsNotRetrievedCount);
+							System.out.println("   - tweets storage errors: " + tweetsStorageErrorCount + "\n***\n");
+						}
+						
+					}
+					catch (TwitterException te) {
+						System.out.println("ERROR WHILE PROCESSING BATCH OF TWEETS: Couldn't connect: \n " + te.getMessage());
+					}
+					
+				}
+				
 			}
 			
 			// Store to file
@@ -208,8 +275,9 @@ public class TwitterRESTTweetIDlistCrawler {
 			System.out.println(storageCount + " tweets stored to file: " + fileName);
 			System.out.println("\n");
 			System.out.println("Total tweet IDs analyzed: " + tweetIDsAnalyzed + " of which:");
-			System.out.println("   - tweets stored to as JSON objects: " + tweetsCount + "\n***\n");
-			System.out.println("   - tweets not retrieved (error - unavailable): " + tweetsErrorCount + "\n***\n");
+			System.out.println("   - tweets stored to as JSON objects: " + tweetsCount);
+			System.out.println("   - tweets not retrieved (error - unavailable): " + tweetsNotRetrievedCount);
+			System.out.println("   - tweets storage errors: " + tweetsStorageErrorCount + "\n***\n");
 			
 			System.out.println("Execution terminated.");
 			

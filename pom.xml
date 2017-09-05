@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.backingdata.twitter</groupId>
 	<artifactId>twitter-crawler</artifactId>
-	<version>0.3</version>
+	<version>0.4</version>
 	<name>REST and STREAMING crawlers of Twitter</name>
 	<description>Utility classes to gather data by relying on Twitter REST and STREAMING endpoints - based on https://github.com/twitter/hbc</description>
 
@@ -93,7 +93,19 @@
 			<version>2.2.0</version>
 		</dependency>
 
-		
+		<!-- Twitter4j 4.0.6 overwrites the dependency on 4.0.1 version needed 
+			by hbc-twitter4j -->
+		<dependency>
+			<groupId>org.twitter4j</groupId>
+			<artifactId>twitter4j-core</artifactId>
+			<version>4.0.6</version>
+		</dependency>
 
+		<dependency>
+			<groupId>org.twitter4j</groupId>
+			<artifactId>twitter4j-stream</artifactId>
+			<version>4.0.6</version>
+		</dependency>
+		
 	</dependencies>
 </project>
