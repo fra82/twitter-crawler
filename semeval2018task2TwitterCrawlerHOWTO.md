@@ -1,4 +1,4 @@
-[Multilingual Emoji Prediction (SemEval-2018 Task 2)](https://competitions.codalab.org/competitions/17117)
+[Multilingual Emoji Prediction (SemEval-2018 Task 2)](https://competitions.codalab.org/competitions/17344)
 
 # Twitter Crawler
 
