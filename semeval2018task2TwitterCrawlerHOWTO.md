@@ -12,7 +12,7 @@ The Twitter crawler takes as input:
  * a **Tweet IDs text file** including a list of Tweet IDs to download, one ID per line. [Download an example of Tweet IDs text file](http://backingdata.org/semeval2018crawler/files/exampleOftweetIDsFile.list).  
  * a **configuration text file** useful to specify:
      * the pool of Twitter developer app credentials to use to crawl. One or more app credentials can be created by accessing the [Twitter App Console](https://apps.twitter.com/). You can specify up to 150 Twitter developer app credentials; more you provide, faster the crawling process will be
-     * the full local path of the <b>Tweet IDs text file</b> to read tweet IDs from (one tweet ID per line) 
+     * the full local path of the ***Tweet IDs text file*** to read tweet IDs from (one tweet ID per line) 
      * the full local path of the output folder to store crawling results 
 
 
@@ -23,15 +23,15 @@ The Twitter crawler has to be executed by Java 1.7 or newer. As a consequence, a
 
  ## Crawler Execution
  
- 1. Download the Twitter Crawler from [here, URL: http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz](http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz)</li>
+ 1. Download the Twitter Crawler from [here](http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz) (download URL: http://backingdata.org/semeval2018crawler/files/semeval-2018-task2-twitter-crawler-0.4.tar.gz)
  2. Decompress the tar.gz archive and open the folder 'semeval-2018-task2-twitter-crawler-0.4'
- 3. Download the <b>Tweet IDs text file</b> from [Multilingual Emoji Prediction (SemEval-2018 Task 2)](https://competitions.codalab.org/competitions/17117)
+ 3. Download the ***Tweet IDs text file*** from [Multilingual Emoji Prediction (SemEval-2018 Task 2)](https://competitions.codalab.org/competitions/17117)
  4. By means of a text editor, modify the ***configuration text file*** named 'crawler.properties' present in the folder 'semeval-2018-task2-twitter-crawler-0.4', by specifying:
      * one or a pool of Twitter developer app credentials (create your app credentials [here](https://apps.twitter.com/)). Each Twitter developer app credential is made of: a consumer key, a consumer secret, a token and a token secret. More Twitter developer app credentials you provide, faster the crawling process will be
-     * the full path of the <b>Tweet IDs text file</b> as value of the property: *tweetID.fullPathTweetIDs*
+     * the full path of the ***Tweet IDs text file*** as value of the property: *tweetID.fullPathTweetIDs*
      * the full path of the output folder to store crawling results as value of the property: *tweetID.fullOutputDirPath*
      * leave the property: *tweetID.fullOutputDirPath* equal to 'json'
- 5. Start the crawler by executing the following command from the folder 'semeval-2018-task2-twitter-crawler-0.4':<br/>
+ 5. Start the crawler by executing the following command from the folder 'semeval-2018-task2-twitter-crawler-0.4':
 ```
 java -cp './twitter-crawler-0.4.jar:./lib/*' org.backingdata.twitter.crawler.rest.TwitterRESTTweetIDlistCrawler /full/local/path/to/semeval-2018-task2-twitter-crawler-0.4/crawler.properties
 ```
