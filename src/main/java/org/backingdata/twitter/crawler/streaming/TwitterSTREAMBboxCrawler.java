@@ -398,45 +398,56 @@ public class TwitterSTREAMBboxCrawler {
 										if(bb != null && bb.isInBbox(longitudeVal, latitudeVal)) {
 											for(Map.Entry<String, PrintWriter> entry_int : storageFileMap.entrySet()) {
 												if(entry_int.getKey().equals(locationString)) {
-													// Store to list
-													storageFileTweetList.get(entry_int.getKey()).add(msg);
-													// Store to file
-													// entry_int.getValue().write(msg);
-													// entry_int.getValue().flush();
-
-													inOneBbox = true;
-													totalTweetStoredCount++;
-
-													if(totalTweetStoredCount % 100 == 0) {
-														printMemoryStatus();
-														System.gc();
-														System.out.println("GARBAGE COLLECTOR CALLED: ");
-														printMemoryStatus();
-													}
-
+													
 													for(Map.Entry<String, Integer> entry_int_int : storageFileCount.entrySet()) {
 														if(entry_int_int.getKey().equals(locationString)) {
-
+															
+															boolean storeTweet = false;
+															
 															// Management of storeMaxOneTweetEveryXseconds
 															if(storeMaxOneTweetEveryXseconds != null && storeMaxOneTweetEveryXseconds > 0l) {
 																Long lastTimestamp = storageFileLastTimestamp.get(locationString);
 																if(lastTimestamp != null && (System.currentTimeMillis() - lastTimestamp) < (storeMaxOneTweetEveryXseconds * 1000l)) {
 																	System.out.println("SKIPPED TWEET FOR LOCATION: " + locationString + " - only  " + (System.currentTimeMillis() - lastTimestamp) + " ms (< " + storeMaxOneTweetEveryXseconds + "s)"
 																			+ "since last tweet received - queue free places: " + queue.remainingCapacity());
-																	continue;
+																	storeTweet = false;
 																}
 																else {
-																	storageFileLastTimestamp.put(locationString, 0l);
+																	storageFileLastTimestamp.put(locationString, System.currentTimeMillis());
+																	storeTweet = true;
 																}
 															}
-															storageFileLastTimestamp.put(locationString, System.currentTimeMillis());
+															else {
+																// No storeMaxOneTweetEveryXseconds set, store tweet anyway
+																storeTweet = true;
+															}
+															
+															if(storeTweet) {
+																// Store to list
+																storageFileTweetList.get(entry_int.getKey()).add(msg);
+																// Store to file
+																// entry_int.getValue().write(msg);
+																// entry_int.getValue().flush();
 
-
-															Integer storageCount = entry_int_int.getValue();
-															storageFileCount.put(locationString, storageCount + 1);
-															System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+																inOneBbox = true;
+																totalTweetStoredCount++;
+																
+																// Increment number of stored tweets for the bounding box
+																Integer storageCount = entry_int_int.getValue();
+																storageFileCount.put(locationString, storageCount + 1);
+																System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+															}
+															
 														}
 													}
+													
+													if(totalTweetStoredCount % 100 == 0) {
+														printMemoryStatus();
+														System.gc();
+														System.out.println("GARBAGE COLLECTOR CALLED: ");
+														printMemoryStatus();
+													}
+													
 												}
 											}							
 										}
@@ -533,28 +544,56 @@ public class TwitterSTREAMBboxCrawler {
 																		(bb.isInBbox(minLon, minLat) || bb.isInBbox(minLon, maxLat) || bb.isInBbox(maxLon, minLat) || bb.isInBbox(maxLon, maxLat)) ) {
 																	for(Map.Entry<String, PrintWriter> entry_int : storageFileMap.entrySet()) {
 																		if(entry_int.getKey().equals(locationString)) {
-																			// Store to list
-																			storageFileTweetList.get(entry_int.getKey()).add(msg);
-																			// Store to file
-																			// entry_int.getValue().write(msg);
-																			// entry_int.getValue().flush();
-																			inOneBbox = true;
-																			totalTweetStoredCount++;
+																			
+																			for(Map.Entry<String, Integer> entry_int_int : storageFileCount.entrySet()) {
+																				if(entry_int_int.getKey().equals(locationString)) {
+																					
+																					boolean storeTweet = false;
+																					
+																					// Management of storeMaxOneTweetEveryXseconds
+																					if(storeMaxOneTweetEveryXseconds != null && storeMaxOneTweetEveryXseconds > 0l) {
+																						Long lastTimestamp = storageFileLastTimestamp.get(locationString);
+																						if(lastTimestamp != null && (System.currentTimeMillis() - lastTimestamp) < (storeMaxOneTweetEveryXseconds * 1000l)) {
+																							System.out.println("SKIPPED TWEET FOR LOCATION: " + locationString + " - only  " + (System.currentTimeMillis() - lastTimestamp) + " ms (< " + storeMaxOneTweetEveryXseconds + "s)"
+																									+ "since last tweet received - queue free places: " + queue.remainingCapacity());
+																							storeTweet = false;
+																						}
+																						else {
+																							storageFileLastTimestamp.put(locationString, System.currentTimeMillis());
+																							storeTweet = true;
+																						}
+																					}
+																					else {
+																						// No storeMaxOneTweetEveryXseconds set, store tweet anyway
+																						storeTweet = true;
+																					}
+																					
+																					if(storeTweet) {
+																						// Store to list
+																						storageFileTweetList.get(entry_int.getKey()).add(msg);
+																						// Store to file
+																						// entry_int.getValue().write(msg);
+																						// entry_int.getValue().flush();
 
+																						inOneBbox = true;
+																						totalTweetStoredCount++;
+																						
+																						// Increment number of stored tweets for the bounding box
+																						Integer storageCount = entry_int_int.getValue();
+																						storageFileCount.put(locationString, storageCount + 1);
+																						System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+																					}
+																					
+																				}
+																			}
+																			
 																			if(totalTweetStoredCount % 100 == 0) {
 																				printMemoryStatus();
 																				System.gc();
 																				System.out.println("GARBAGE COLLECTOR CALLED: ");
 																				printMemoryStatus();
 																			}
-
-																			for(Map.Entry<String, Integer> entry_int_int : storageFileCount.entrySet()) {
-																				if(entry_int_int.getKey().equals(locationString)) {
-																					Integer storageCount = entry_int_int.getValue();
-																					storageFileCount.put(locationString, storageCount + 1);
-																					System.out.println("SAVE PLACE GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " PLACE: " + ((receivedStatus.getPlace().getName() != null) ? receivedStatus.getPlace().getName() : "NULL") + " - queue free places: " + queue.remainingCapacity());
-																				}
-																			}
+																			
 																		}
 																	}							
 																}
