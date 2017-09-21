@@ -158,11 +158,11 @@ public class TwitterSTREAMBboxCrawler {
 				boolean flushTweet = ((storageFileCount.get(locationString) % this.flushFileNumTweets == 0) || (storageFileCount.get(locationString) % this.changeFileNumTweets == 0)) ? true : false;
 				boolean changeFile = (storageFileCount.get(locationString) % this.changeFileNumTweets == 0) ? true : false;
 
-				if(flushTweet) {
+				if(flushTweet && storageFileTweetList.get(locationString).size() > 0) {
 					// Store in tweet JSON file all messages in logFileList
 					for(String storageFileMessage : storageFileTweetList.get(locationString)) {
 						if(storageFileMessage != null && storageFileMessage.trim().length() > 0) {
-							storageFileMap.get(locationString).write(storageFileMessage + "\n");
+							storageFileMap.get(locationString).write((storageFileMessage.endsWith("\n")) ? storageFileMessage : storageFileMessage + "\n");
 						}
 					}
 
@@ -177,7 +177,7 @@ public class TwitterSTREAMBboxCrawler {
 					storageFileMap.get(locationString).close();
 					storageFileMap.put(locationString, null);
 
-					System.out.println("Closed " + storageFileTweetList.get(locationString).size() + " tweets file of location  " + locationString + " with id " + (storageFileId.get(locationString) - 1));
+					System.out.println("Closed tweets file of location  " + locationString + " with id " + (storageFileId.get(locationString) - 1));
 
 					// Increase the number of storage count to not generate other files if the tweet is not stored
 					Integer storageCountAppo = storageFileCount.get(locationString);
@@ -194,7 +194,7 @@ public class TwitterSTREAMBboxCrawler {
 			boolean changeLogFile = (totalTweetStoredCount % this.changeLogFileNumTweets == 0) ? true : false;
 
 
-			if(flushLog) {
+			if(flushLog && logFileList.size() > 0) {
 				// Store in log file all messages in logFileList
 				for(String logFileMessage : logFileList) {
 					if(logFileMessage != null && logFileMessage.trim().length() > 0) {
@@ -464,7 +464,7 @@ public class TwitterSTREAMBboxCrawler {
 																// Increment number of stored tweets for the bounding box
 																Integer storageCount = entry_int_int.getValue();
 																storageFileCount.put(locationString, storageCount + 1);
-																System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+																System.out.println("RECEIVED (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
 															}
 
 														}
@@ -610,7 +610,7 @@ public class TwitterSTREAMBboxCrawler {
 																						// Increment number of stored tweets for the bounding box
 																						Integer storageCount = entry_int_int.getValue();
 																						storageFileCount.put(locationString, storageCount + 1);
-																						System.out.println("SAVE (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+																						System.out.println("RECEIVED (lat, lng) GEOLOCATED TWEET: " + locationString + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
 																					}
 
 																				}
@@ -900,7 +900,7 @@ public class TwitterSTREAMBboxCrawler {
 		}
 
 
-		// Loading tweet keywords from file
+		// Loading bounding boxes from file
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(crawler.fullPathOfBoundingBoxesFile)), "UTF-8"));
 

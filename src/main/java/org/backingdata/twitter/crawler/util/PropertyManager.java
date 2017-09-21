@@ -47,7 +47,7 @@ public class PropertyManager {
 	public static final String STREAMbboxOutputFormat = "tweetSTREAMbbox.outputFormat";
 	public static final String STREAMbboxLimitByLanguage = "tweetSTREAMbbox.languageFilter";
 	public static final String STREAMbboxLimitByOneTweetPerXsec = "tweetSTREAMbbox.limitByOneTweetPerXsec";
-	public static final String STREAMbboxFlushToFileEveryXtweetsCrawled = "tweetSTREAMbbox.flushToFileEveryXtweetsCrawler";
+	public static final String STREAMbboxFlushToFileEveryXtweetsCrawled = "tweetSTREAMbbox.flushToFileEveryXtweetsCrawled";
 	public static final String STREAMbboxChangeStorageFileEveryXtweetsCrawled = "tweetSTREAMbbox.changeStorageFileEveryXtweetsCrawled";
 	
 	private String propertyPath;

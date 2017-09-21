@@ -19,6 +19,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.backingdata.twitter.crawler.streaming.model.Bbox;
 import org.backingdata.twitter.crawler.util.CredentialObject;
 import org.backingdata.twitter.crawler.util.PropertyManager;
 import org.backingdata.twitter.crawler.util.PropertyUtil;
@@ -140,6 +141,14 @@ public class TwitterSTREAMHashtagCrawler {
 				storageFileMap.put("ACCOUNT_" + entry.getKey().toLowerCase(), null);
 			}
 		}
+		if(storageFileTweetList.size() == 0) {
+			for(String entry : trackTerms) {
+				storageFileTweetList.put(entry, new ArrayList<String>());
+			}
+			for(Entry<String, Long> entry : userMap.entrySet()) {
+				storageFileTweetList.put("ACCOUNT_" + entry.getKey().toLowerCase(), new ArrayList<String>());
+			}
+		}
 		if(storageFileCount.size() == 0) {
 			for(String entry : trackTerms) {
 				storageFileCount.put(entry, 1);
@@ -174,11 +183,11 @@ public class TwitterSTREAMHashtagCrawler {
 				boolean changeFile = (storageFileCount.get(termString) % this.changeFileNumTweets == 0) ? true : false;
 
 
-				if(flushTweet) {
+				if(flushTweet && storageFileTweetList.get(termString).size() > 0) {
 					// Store in tweet JSON file all messages in logFileList
 					for(String storageFileMessage : storageFileTweetList.get(termString)) {
 						if(storageFileMessage != null && storageFileMessage.trim().length() > 0) {
-							storageFileMap.get(termString).write(storageFileMessage + "\n");
+							storageFileMap.get(termString).write((storageFileMessage.endsWith("\n")) ? storageFileMessage : storageFileMessage + "\n");
 						}
 					}
 
@@ -193,7 +202,7 @@ public class TwitterSTREAMHashtagCrawler {
 					storageFileMap.get(termString).close();
 					storageFileMap.put(termString, null);
 
-					System.out.println("Closed " + storageFileTweetList.get(termString).size() + " tweets file of term  " + termString + " with id " + (storageFileId.get(termString) - 1));
+					System.out.println("Closed tweets file of term  " + termString + " with id " + (storageFileId.get(termString) - 1));
 
 					// Increase the number of storage count to not generate other files if the tweet is not stored
 					Integer storageCountAppo = storageFileCount.get(termString);
@@ -211,11 +220,11 @@ public class TwitterSTREAMHashtagCrawler {
 				boolean changeFile = (storageFileCount.get("ACCOUNT_" + userString) % this.changeFileNumTweets == 0) ? true : false;
 
 
-				if(flushTweet) {
+				if(flushTweet && storageFileTweetList.get("ACCOUNT_" + userString).size() > 0) {
 					// Store in tweet JSON file all messages in logFileList
 					for(String storageFileMessage : storageFileTweetList.get("ACCOUNT_" + userString)) {
 						if(storageFileMessage != null && storageFileMessage.trim().length() > 0) {
-							storageFileMap.get("ACCOUNT_" + userString).write(storageFileMessage + "\n");
+							storageFileMap.get("ACCOUNT_" + userString).write((storageFileMessage.endsWith("\n")) ? storageFileMessage : storageFileMessage + "\n");
 						}
 					}
 
@@ -230,7 +239,7 @@ public class TwitterSTREAMHashtagCrawler {
 					storageFileMap.get("ACCOUNT_" + userString).close();
 					storageFileMap.put("ACCOUNT_" + userString, null);
 
-					System.out.println("Closed " + storageFileTweetList.get("ACCOUNT_" + userString).size() + " tweets file of account  " + userString + " with id " + (storageFileId.get("ACCOUNT_" + userString) - 1));
+					System.out.println("Closed tweets file of account  " + userString + " with id " + (storageFileId.get("ACCOUNT_" + userString) - 1));
 
 					// Increase the number of storage count to not generate other files if the tweet is not stored
 					Integer storageCountAppo = storageFileCount.get("ACCOUNT_" + userString);
@@ -573,7 +582,7 @@ public class TwitterSTREAMHashtagCrawler {
 											if(entry_int_int.getKey().equals("ACCOUNT_" + userName)) {
 												Integer storageCount = entry_int_int.getValue();
 												storageFileCount.put("ACCOUNT_" + userName, storageCount + 1);
-												System.out.println("SAVE: " + userName + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+												System.out.println("RECEIVED: " + userName + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
 											}
 										}
 									}
@@ -635,7 +644,7 @@ public class TwitterSTREAMHashtagCrawler {
 											if(entry_int_int.getKey().equals(entry_int.getKey())) {
 												Integer storageCount = entry_int_int.getValue();
 												storageFileCount.put(entry_int.getKey(), storageCount + 1);
-												System.out.println("SAVE: " + entry_int.getKey() + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
+												System.out.println("RECEIVED: " + entry_int.getKey() + " tot: " + (storageCount + 1) + " - queue free places: " + queue.remainingCapacity());
 											}
 										}
 									}
@@ -899,6 +908,8 @@ public class TwitterSTREAMHashtagCrawler {
 			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMkeywordChangeStorageFileEveryXtweetsCrawled + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
+		
+		crawler.changeFileNumTweets = 10;
 
 		if((crawler.fullPathOfTweetKeywordFile == null || crawler.fullPathOfTweetKeywordFile.equals("")) && 
 				(crawler.fullPathOfTweetTimelineFile == null || crawler.fullPathOfTweetTimelineFile.equals(""))) {
