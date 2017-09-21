@@ -1,7 +1,7 @@
 # twitter-crawler
 Configurable Twitter Crawlers (Java based) useful to gather data by both the REST and STREAMING endpoints and based on [hbc-twitter4j](https://mvnrepository.com/artifact/com.twitter/hbc-twitter4j "hbc-twitter4j").
 
-**NEWS (21/9/2017)**: Version 0.5 of the crawler available including the possibility to configure the storage frequency of crawled tweets to disk for the two STREAMING endpoint crawlers (Keyword Filtered Crawler and Bounding box Filtered Crawler). By properly setting the property files of these two crawlers, it is pssible to set the max number of crawled tweet to store in memory before flushing them to a disk file. In this way, an excessive number of disk write operations is avoided (since they are grouped into bursts). Refer the description of the property files of the two STREAMING endpoint crawlers (Keyword Filtered Crawler and Bounding box Filtered Crawler) below for more details. 
+**NEWS (21/9/2017)**: Version 0.5 of the crawler available including the possibility to **configure the storage frequency of crawled tweets to disk for the two STREAMING endpoint crawlers (Keyword Filtered Crawler and Bounding box Filtered Crawler)**. By the property files, users can set the max number of crawled tweets to keep in memory before flushing them to a disk file. In this way, an excessive number of disk write operations is avoided (since they are grouped into bursts). More details below in the description of the property files of the two STREAMING endpoint crawlers (Keyword Filtered Crawler and Bounding box Filtered Crawler). 
 
 Core features:
  * timeline, keyword and user based crawling (REST endpoints) / keyword, user and bounding box based crawling (STREAMING endpoint)
@@ -251,9 +251,9 @@ tweetSTREAMbbox.outputFormat=json
 #   - If not empty, it is possible specify a comma separated language list to retrieve only tweet of a specific language (en, es, it, etc.) - if empty all tweet are retrieved, indipendently from their language
 #    IMPORTANT: The language code may be formatted as ISO 639-1 alpha-2 (en), ISO 639-3 alpha-3 (msa), or ISO 639-1 alpha-2 combined with an ISO 3166-1 alpha-2 localization (zh-tw).
 tweetSTREAMbbox.languageFilter=
-#   - If not empty, it is possible specify the number of tweets to keep in memory (for each bounding box) before storing their content to file. If set to X, the crawler, for each keyword or user account, stores the retrieved tweets to file every X tweets retrieved. If not specified is set equal to 100.
+#   - If not empty, it is possible specify the number of tweets to keep in memory (for each bounding box) before storing their content to file. If set to X, the crawler, for each bounding box, stores the retrieved tweets to file every X tweets retrieved. If not specified is set equal to 100.
 tweetSTREAMbbox.flushToFileEveryXtweetsCrawled=
-#   - If not empty, it is possible specify the number of tweets to retrieve (for each bounding box) before changing the storage file. If set to X, the crawler, for each keyword or user account, changes the file to store  the retrieved tweets every X tweets retrieved. If not specified is set equal to 20000.
+#   - If not empty, it is possible specify the number of tweets to retrieve (for each bounding box) before changing the storage file. If set to X, the crawler, for each bounding box, changes the file to store  the retrieved tweets every X tweets retrieved. If not specified is set equal to 20000.
 tweetSTREAMbbox.changeStorageFileEveryXtweetsCrawled=
  ```
  
