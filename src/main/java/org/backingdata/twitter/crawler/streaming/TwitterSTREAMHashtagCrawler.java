@@ -908,8 +908,6 @@ public class TwitterSTREAMHashtagCrawler {
 			System.out.println("ERROR: output format (property '" + PropertyManager.STREAMkeywordChangeStorageFileEveryXtweetsCrawled + "') - exception: " + ((e.getMessage() != null) ? e.getMessage() : "NULL"));
 			return;
 		}
-		
-		crawler.changeFileNumTweets = 10;
 
 		if((crawler.fullPathOfTweetKeywordFile == null || crawler.fullPathOfTweetKeywordFile.equals("")) && 
 				(crawler.fullPathOfTweetTimelineFile == null || crawler.fullPathOfTweetTimelineFile.equals(""))) {
