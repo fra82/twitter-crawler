@@ -1,6 +1,8 @@
 # twitter-crawler
 Configurable Twitter Crawlers (Java based) useful to gather data by both the REST and STREAMING endpoints and based on [hbc-twitter4j](https://mvnrepository.com/artifact/com.twitter/hbc-twitter4j "hbc-twitter4j").
 
+**NEWS (21/9/2017)**: Version 0.5 of the crawler available including the possibility to configure the storage frequency of crawled tweets to disk for the two STREAMING endpoint crawlers (Keyword Filtered Crawler and Bounding box Filtered Crawler). By properly setting the property files of these two crawlers, it is pssible to set the max number of crawled tweet to store in memory before flushing them to a disk file. In this way, an excessive number of disk write operations is avoided (since they are grouped into bursts). Refer the description of the property files of the two STREAMING endpoint crawlers (Keyword Filtered Crawler and Bounding box Filtered Crawler) below for more details. 
+
 Core features:
  * timeline, keyword and user based crawling (REST endpoints) / keyword, user and bounding box based crawling (STREAMING endpoint)
  * complete configuration of crawlers by means of a property file (download the Jar, set up a property file and start crawling,as explained in [Set up Twitter crawlers](#setUpTwitterCralwers));
@@ -182,7 +184,7 @@ token_1=PUT_YOUR_TOKEN_NUM_1
 tokenSecret_1=PUT_YOUR_TOKEN_SECRET_NUM_1
 
 ####################################################################################
-# TREAMING Cralwer of Twitter - retrieves all tweets matching some specific keywords / users 
+# STREAMING Cralwer of Twitter - retrieves all tweets matching some specific keywords / users 
 # and/or in some specific language.
 # Class: org.backingdata.twitter.crawler.streaming.TwitterSTREAMHashtagCrawler
 #   - Full path of the txt file to read terms from (one term ID per line)
@@ -202,6 +204,10 @@ tweetSTREAMkeyword.outputFormat=json
 tweetSTREAMkeyword.languageFilter=
 #   - If not empty, it is possible specify a number of seconds - max number of tweet to store per seconds per user or keyword 
 tweetSTREAMkeyword.limitByOneTweetPerXsec=
+#   - If not empty, it is possible specify the number of tweets to keep in memory (for each term and user account) before storing their content to file. If set to X, the crawler, for each keyword or user account, stores the retrieved tweets to file every X tweets retrieved. If not specified is set equal to 100.
+tweetSTREAMkeyword.flushToFileEveryXtweetsCrawled=
+#   - If not empty, it is possible specify the number of tweets to retrieve (for each term and user account) before changing the storage file. If set to X, the crawler, for each keyword or user account, changes the file to store  the retrieved tweets every X tweets retrieved. If not specified is set equal to 20000.
+tweetSTREAMkeyword.changeStorageFileEveryXtweetsCrawled=
 
 ```
  
@@ -245,6 +251,10 @@ tweetSTREAMbbox.outputFormat=json
 #   - If not empty, it is possible specify a comma separated language list to retrieve only tweet of a specific language (en, es, it, etc.) - if empty all tweet are retrieved, indipendently from their language
 #    IMPORTANT: The language code may be formatted as ISO 639-1 alpha-2 (en), ISO 639-3 alpha-3 (msa), or ISO 639-1 alpha-2 combined with an ISO 3166-1 alpha-2 localization (zh-tw).
 tweetSTREAMbbox.languageFilter=
+#   - If not empty, it is possible specify the number of tweets to keep in memory (for each bounding box) before storing their content to file. If set to X, the crawler, for each keyword or user account, stores the retrieved tweets to file every X tweets retrieved. If not specified is set equal to 100.
+tweetSTREAMbbox.flushToFileEveryXtweetsCrawled=
+#   - If not empty, it is possible specify the number of tweets to retrieve (for each bounding box) before changing the storage file. If set to X, the crawler, for each keyword or user account, changes the file to store  the retrieved tweets every X tweets retrieved. If not specified is set equal to 20000.
+tweetSTREAMbbox.changeStorageFileEveryXtweetsCrawled=
  ```
  
  Example of file with list of bounding boxes to crawl (```tweetSTREAMkeyword.fullPathUserList```):
