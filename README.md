@@ -251,6 +251,8 @@ tweetSTREAMbbox.outputFormat=json
 #   - If not empty, it is possible specify a comma separated language list to retrieve only tweet of a specific language (en, es, it, etc.) - if empty all tweet are retrieved, indipendently from their language
 #    IMPORTANT: The language code may be formatted as ISO 639-1 alpha-2 (en), ISO 639-3 alpha-3 (msa), or ISO 639-1 alpha-2 combined with an ISO 3166-1 alpha-2 localization (zh-tw).
 tweetSTREAMbbox.languageFilter=
+#   - If not empty, it is possible specify a number of seconds - max number of tweet to store per seconds per bounding box
+tweetSTREAMbbox.limitByOneTweetPerXsec=
 #   - If not empty, it is possible specify the number of tweets to keep in memory (for each bounding box) before storing their content to file. If set to X, the crawler, for each bounding box, stores the retrieved tweets to file every X tweets retrieved. If not specified is set equal to 100.
 tweetSTREAMbbox.flushToFileEveryXtweetsCrawled=
 #   - If not empty, it is possible specify the number of tweets to retrieve (for each bounding box) before changing the storage file. If set to X, the crawler, for each bounding box, changes the file to store  the retrieved tweets every X tweets retrieved. If not specified is set equal to 20000.
