@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.backingdata.twitter</groupId>
 	<artifactId>twitter-crawler</artifactId>
-	<version>0.4</version>
+	<version>0.5</version>
 	<name>REST and STREAMING crawlers of Twitter</name>
 	<description>Utility classes to gather data by relying on Twitter REST and STREAMING endpoints - based on https://github.com/twitter/hbc</description>
 

@@ -39,12 +39,16 @@ public class PropertyManager {
 	public static final String STREAMkeywordOutputFormat = "tweetSTREAMkeyword.outputFormat";
 	public static final String STREAMkeywordLimitByLanguage = "tweetSTREAMkeyword.languageFilter";
 	public static final String STREAMkeywordLimitByOneTweetPerXsec = "tweetSTREAMkeyword.limitByOneTweetPerXsec";
+	public static final String STREAMkeywordFlushToFileEveryXtweetsCrawled = "tweetSTREAMkeyword.flushToFileEveryXtweetsCrawled";
+	public static final String STREAMkeywordChangeStorageFileEveryXtweetsCrawled = "tweetSTREAMkeyword.changeStorageFileEveryXtweetsCrawled";
 	
 	public static final String STREAMbboxListPath = "tweetSTREAMbbox.fullPathBoundingBoxes";
 	public static final String STREAMbboxFullPathOfOutputDir = "tweetSTREAMbbox.fullOutputDirPath";
 	public static final String STREAMbboxOutputFormat = "tweetSTREAMbbox.outputFormat";
-	public static final String STREAMbboxLimitByLanguage = "weetSTREAMbbox.languageFilter";
-	
+	public static final String STREAMbboxLimitByLanguage = "tweetSTREAMbbox.languageFilter";
+	public static final String STREAMbboxLimitByOneTweetPerXsec = "tweetSTREAMbbox.limitByOneTweetPerXsec";
+	public static final String STREAMbboxFlushToFileEveryXtweetsCrawled = "tweetSTREAMbbox.flushToFileEveryXtweetsCrawler";
+	public static final String STREAMbboxChangeStorageFileEveryXtweetsCrawled = "tweetSTREAMbbox.changeStorageFileEveryXtweetsCrawled";
 	
 	private String propertyPath;
 	private Properties holder = null; 
