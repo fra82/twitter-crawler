@@ -33,7 +33,11 @@ In order to execute one of the previous crawlers you shuld carry out the followi
 2. After downloading the library from [twitter-crawler library](http://backingdata.org/twitter-crawler/0.5/twitter-crawler-0.5-bin.zip "twitter-crawler library"), extract the file twitter-crawler-0.5-bin.zip;
 3. Enter the folder 'twitter-crawler-0.5-bin' that contains the extracted library files and execute the following command:
 ```
-java -cp twitter-crawler-0.5.jar FULLY_QUALIFIED_NAME_OF_CRAWLER_CLASS /full/local/path/to/crawler.properties
+// Linux users:
+java -cp './twitter-crawler-0.5.jar:./lib/*' FULLY_QUALIFIED_NAME_OF_CRAWLER_CLASS /full/local/path/to/crawler.properties
+
+// Windows users:
+java -classpath c:\Full\Local\Path\To\twitter-crawler-0.5\twitter-crawler-0.5.jar;c:\Full\Local\Path\To\twitter-crawler-0.5\lib\* FULLY_QUALIFIED_NAME_OF_CRAWLER_CLASS c:\Full\Local\Path\To\crawler.properties
 ```
 
 Depending on the crawler you are goning to use, the FULLY_QUALIFIED_NAME_OF_CRAWLER_CLASS is:
@@ -44,7 +48,8 @@ Depending on the crawler you are goning to use, the FULLY_QUALIFIED_NAME_OF_CRAW
  * **Keyword Filtered Crawler** (STREAMING endpoint): ```org.backingdata.twitter.crawler.streaming.TwitterSTREAMHashtagCrawler```;
  * **Bounding box Filtered Crawler** (STREAMING endpoint): ```org.backingdata.twitter.crawler.streaming.TwitterSTREAMBboxCrawler```.
 
-For each one of the previous crawlers, all the crawling parameters (Twitter credentials' pool, list of users, keywords, bounding boxes, etx.) can be specified by means of the crawler.property file (```/full/local/path/to/crawler.properties```). In what follows, for each Twitter crawler, the format of the related configuration file si described.
+For each one of the previous crawlers, all the crawling parameters (Twitter credentials' pool, list of users, keywords, bounding boxes, etx.) can be specified by means of the crawler.property file (```/full/local/path/to/crawler.properties```). In what follows, for each Twitter crawler, the format of the related configuration file si described. WIndows users are suggested to use https://notepad-plus-plus.org/ to edit the crawler.property file.
+
 
 ### Configuration file format of **Account Timeline Crawler** (REST endpoint)
 Example of the configuration file of an Account Timeline Crawler (create a crawler.properties file and copy&paste this content, then customize it by specifying your crawler configuration parameters):
