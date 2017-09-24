@@ -33,10 +33,10 @@ The Twitter crawler has to be executed by Java 1.7 or newer. As a consequence, a
      * leave the property: *tweetID.fullOutputDirPath* equal to 'json'
  5. Start the crawler by executing the following command from the folder 'semeval-2018-task2-twitter-crawler-0.4':
 ```
-// Linux Users:
+// Linux users:
 java -cp './twitter-crawler-0.4.jar:./lib/*' org.backingdata.twitter.crawler.rest.TwitterRESTTweetIDlistCrawler /full/local/path/to/semeval-2018-task2-twitter-crawler-0.4/crawler.properties
 
-// Windows Users:
+// Windows users:
 java -classpath c:\Full\Local\Path\To\semeval-2018-task2-twitter-crawler-0.4\twitter-crawler-0.4.jar;c:\Full\Local\Path\To\semeval-2018-task2-twitter-crawler-0.4\lib\* org.backingdata.twitter.crawler.rest.TwitterRESTTweetIDlistCrawler c:\Full\Local\Path\To\semeval-2018-task2-twitter-crawler-0.4\crawler.properties
 ```
  6. During the execution, several messages concerning the status of the crawling process will be displayed in the standard output
