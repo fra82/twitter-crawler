@@ -854,10 +854,12 @@ public class TwitterSTREAMBboxCrawler {
 			if(flushRate != null && !flushRate.trim().equals("")) {
 				try {
 					crawler.flushFileNumTweets = Integer.valueOf(flushRate);
-
+					
+					/*
 					if(crawler.flushFileNumTweets < 20) {
 						crawler.flushFileNumTweets = 20;
 					}
+					*/
 				}
 				catch(Exception e) {
 					crawler.flushFileNumTweets = 100;
