@@ -398,6 +398,9 @@ public class TwitterRESTTweetIDlistCrawler {
 			String str;
 			while ((str = in.readLine()) != null) {
 				if(!str.trim().equals("")) {
+					if(tweetIDset.contains(str.trim())) {
+						System.out.println("Repeated tweet ID: " + str.trim());
+					}
 					tweetIDset.add(str.trim());
 				}
 			}

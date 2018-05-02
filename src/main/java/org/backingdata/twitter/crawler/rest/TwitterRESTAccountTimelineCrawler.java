@@ -127,6 +127,7 @@ public class TwitterRESTAccountTimelineCrawler {
 						Boolean nextPage = true;
 						
 						ArrayList<String> tweetsToStore = new ArrayList<String>();
+						int errorsCouter = 0;
 						while(nextPage) {
 							Paging pagingInstance = new Paging();
 							pagingInstance.setPage(pageNum);
@@ -137,7 +138,7 @@ public class TwitterRESTAccountTimelineCrawler {
 								Twitter currentAccountToQuery =  twitterList.get(accountCredentialsId);
 								logger.info("Queried account: "  + accountCredentialsId);
 								accountCredentialsId = (accountCredentialsId + 1) % consumerKey.size();
-								ResponseList<Status> timeline = currentAccountToQuery.getUserTimeline(userId, pagingInstance);
+								ResponseList<Status> timeline = currentAccountToQuery.getUserTimeline(entry.getKey(), pagingInstance);
 								pageNum++;
 
 								Thread.sleep(sleepTimeInMilliseconds);
@@ -165,6 +166,9 @@ public class TwitterRESTAccountTimelineCrawler {
 							} catch (TwitterException e) {
 								logger.info("Error while querying Twitter: " + e.getMessage());
 								e.printStackTrace();
+								if(++errorsCouter > 2) {
+									nextPage = false;
+								}
 							}
 						}
 						
