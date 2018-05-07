@@ -15,9 +15,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.backingdata.twitter.crawler.util.Crawling;
 import org.backingdata.twitter.crawler.util.CredentialObject;
 import org.backingdata.twitter.crawler.util.PropertyManager;
 import org.backingdata.twitter.crawler.util.PropertyUtil;
+import org.backingdata.twitter.crawler.util.model.StoreMediaOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,11 @@ public class TwitterRESTTweetIDlistCrawler {
 	private static List<String> consumerSecret = new ArrayList<String>();
 	private static List<String> token = new ArrayList<String>();
 	private static List<String> tokenSecret = new ArrayList<String>();
+	
+	private static boolean storeImages = false;
+	private static boolean storeVideos = false;
+	private static boolean storeAnimatedGIF = false;
+	
 
 	// Full local path of a local text file containing a list of tweet IDs (one per line)
 	private static String fullPathOfTweetIDfile = "";
@@ -116,6 +123,11 @@ public class TwitterRESTTweetIDlistCrawler {
 			Integer tweetsCount = 0;
 			Integer tweetsNotRetrievedCount = 0;
 			Integer tweetsStorageErrorCount = 0;
+			
+			Integer tweetsRetrieveMediaErrorCount = 0;
+			Integer tweetsImageSotrageCount = 0;			
+			Integer tweetsVideoSotrageCount = 0;
+			Integer tweetsAnimatedGIFsotrageCount = 0;
 			
 			List<String> tweetToStore = new ArrayList<String>();
 			if(tweetIDset != null && tweetIDset.size() > 0) {
@@ -185,6 +197,21 @@ public class TwitterRESTTweetIDlistCrawler {
 							try {
 								Status status = statusIter.next();
 								
+								if(storeImages || storeVideos || storeAnimatedGIF) {
+									StoreMediaOutput smo = Crawling.storeMedia(status, storageDir.getAbsolutePath(), storeImages, storeVideos, storeAnimatedGIF);
+									
+									if(smo != null) {
+										if(smo.getErrorStr() != null && !smo.getErrorStr().equals("")) {
+											System.out.println("ERROR > STORING TWEET MEDIA: " + smo.getErrorStr());
+											tweetsRetrieveMediaErrorCount++;
+										}
+										
+										tweetsImageSotrageCount += (smo.getImageFilePaths() != null) ? smo.getImageFilePaths().size() : 0;			
+										tweetsVideoSotrageCount += (smo.getVideoFilePaths() != null) ? smo.getVideoFilePaths().size() : 0;			
+										tweetsAnimatedGIFsotrageCount += (smo.getAnimated_gifFilePaths() != null) ? smo.getAnimated_gifFilePaths().size() : 0;	
+									}
+								}
+								
 								if(status != null && status.getCreatedAt() != null) {
 									String msg = DataObjectFactory.getRawJSON(status);
 									if(msg == null) {
@@ -237,9 +264,15 @@ public class TwitterRESTTweetIDlistCrawler {
 							System.out.println(storageCount + " tweets stored to file: " + fileName);
 							System.out.println("\n");
 							System.out.println("Total tweet IDs analyzed: " + tweetIDsAnalyzed + " of which:");
-							System.out.println("   - tweets stored to as JSON objects: " + tweetsCount);
+							System.out.println("   - tweets stored to JSON objects: " + tweetsCount);
 							System.out.println("   - tweets not retrieved (error - unavailable): " + tweetsNotRetrievedCount);
-							System.out.println("   - tweets storage errors: " + tweetsStorageErrorCount + "\n***\n");
+							System.out.println("   - tweets storage errors: " + tweetsStorageErrorCount);
+							if(storeImages || storeVideos || storeAnimatedGIF) System.out.println("   - tweets media retrieval error: " + tweetsRetrieveMediaErrorCount);
+							if(storeImages) System.out.println("   - tweets images stored: " + tweetsImageSotrageCount);
+							if(storeVideos) System.out.println("   - tweets videos stored: " + tweetsVideoSotrageCount);
+							if(storeAnimatedGIF) System.out.println("   - tweets animated_gif stored: " + tweetsAnimatedGIFsotrageCount);
+							System.out.println("\n***\n");
+							
 						}
 						
 					}
@@ -277,7 +310,12 @@ public class TwitterRESTTweetIDlistCrawler {
 			System.out.println("Total tweet IDs analyzed: " + tweetIDsAnalyzed + " of which:");
 			System.out.println("   - tweets stored to as JSON objects: " + tweetsCount);
 			System.out.println("   - tweets not retrieved (error - unavailable): " + tweetsNotRetrievedCount);
-			System.out.println("   - tweets storage errors: " + tweetsStorageErrorCount + "\n***\n");
+			System.out.println("   - tweets storage errors: " + tweetsStorageErrorCount);
+			if(storeImages || storeVideos || storeAnimatedGIF) System.out.println("   - tweets media retrieval error: " + tweetsRetrieveMediaErrorCount);
+			if(storeImages) System.out.println("   - tweets images stored: " + tweetsImageSotrageCount);
+			if(storeVideos) System.out.println("   - tweets videos stored: " + tweetsVideoSotrageCount);
+			if(storeAnimatedGIF) System.out.println("   - tweets animated_gif stored: " + tweetsAnimatedGIFsotrageCount);
+			System.out.println("\n***\n");
 			
 			System.out.println("Execution terminated.");
 			
